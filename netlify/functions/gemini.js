@@ -1,23 +1,25 @@
 // netlify/functions/gemini.js
 
-// Simple Netlify function that calls Gemini over plain HTTP.
-// No external npm packages required.
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-exports.handler = async function (event) {
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: "Method not allowed" }),
-    };
-  }
-
+export const handler = async (event) => {
   try {
-    const { imageBase64, mimeType } = JSON.parse(event.body || "{}");
+    if (event.httpMethod !== "POST") {
+      return {
+        statusCode: 405,
+        body: JSON.stringify({ error: "Method not allowed" }),
+        headers: { "Content-Type": "application/json" },
+      };
+    }
 
-    if (!imageBase64) {
+    const body = JSON.parse(event.body || "{}");
+    const { base64Image } = body;
+
+    if (!base64Image) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Missing imageBase64 in body" }),
+        body: JSON.stringify({ error: "No image data sent" }),
+        headers: { "Content-Type": "application/json" },
       };
     }
 
@@ -25,72 +27,53 @@ exports.handler = async function (event) {
     if (!apiKey) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "GEMINI_API_KEY is not set" }),
+        body: JSON.stringify({ error: "Missing GEMINI_API_KEY on server" }),
+        headers: { "Content-Type": "application/json" },
       };
     }
 
-    const url =
-  "https://generativelanguage.googleapis.com/v1/models/gemini-pro-vision:generateContent?key=" +
-  apiKey;
+    const genAI = new GoogleGenerativeAI(apiKey);
 
-    const payload = {
-      contents: [
-        {
-          parts: [
-            {
-              text:
-                "Count how many WORDS are in this page. " +
-                "Reply with ONLY the number, no extra words.",
-            },
-            {
-              inlineData: {
-                data: imageBase64,
-                mimeType: mimeType || "image/jpeg",
-              },
-            },
-          ],
-        },
-      ],
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    // FIXED MODEL NAME (v1-compatible)
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash-001",
     });
 
-    const data = await response.json();
+    const imagePart = {
+      inlineData: {
+        data: base64Image,
+        mimeType: "image/jpeg",
+      },
+    };
 
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({
-          error: "Gemini API error",
-          details: data,
-        }),
-      };
-    }
+    const prompt = `
+      Extract ONLY the full text content from this page image.
+      Do NOT summarize.
+      Return exactly the raw text.
+    `;
 
-    const text =
-      (data.candidates &&
-        data.candidates[0] &&
-        data.candidates[0].content &&
-        data.candidates[0].content.parts
-          .map((p) => p.text || "")
-          .join("")) ||
-      "";
+    const result = await model.generateContent([prompt, imagePart]);
+    const text = result.response.text() || "";
+
+    const wordCount = text
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(" ")
+      .filter((w) => w.length > 0).length;
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ rawText: text }),
+      body: JSON.stringify({ wordCount, extractedText: text }),
+      headers: { "Content-Type": "application/json" },
     };
   } catch (err) {
+    console.error("Gemini error:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: "Request failed",
-        details: err.message,
+        error: err.message || "Gemini function error",
       }),
+      headers: { "Content-Type": "application/json" },
     };
   }
 };
