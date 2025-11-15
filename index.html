@@ -66,6 +66,19 @@
                           file:font-semibold file:bg-indigo-600 file:text-white
                           hover:file:bg-indigo-500" />
           </div>
+
+          <div>
+            <label for="total-pages" class="block text-sm mb-1">
+              Total pages read (only if you uploaded exactly 1 sample page)
+            </label>
+            <input id="total-pages" type="number" min="1"
+                   placeholder="e.g. 5"
+                   class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 focus:outline-none focus:ring focus:ring-indigo-500" />
+            <p class="mt-1 text-xs text-slate-400">
+              Example: upload 1 clear page, enter 5 here if you read 5 similar pages.
+            </p>
+          </div>
+
           <div>
             <label for="manual-pages" class="block text-sm mb-1">
               Manual Page Count (if no images)
@@ -127,9 +140,9 @@
         <h3 class="text-lg font-semibold mb-3">How this tool works</h3>
         <ul class="text-sm space-y-2 text-slate-200">
           <li>• Enter how long you read (minutes + seconds).</li>
-          <li>• Upload 1–5 clear photos of book pages.
-              The app asks Gemini to count the words on each page.</li>
-          <li>• If you skip images, it assumes <b>300 words per page</b>.</li>
+          <li>• Option A: upload 1 sample page & enter the total number of similar pages read.</li>
+          <li>• Option B: upload multiple pages (each page you read).</li>
+          <li>• Option C: no images → enter manual page count (uses 300 words/page).</li>
           <li>• WPM categories:
             <br />Beginner: &lt; 200 &nbsp;|&nbsp;
             Intermediate: 200–300 &nbsp;|&nbsp;
@@ -153,6 +166,7 @@
     const form = document.getElementById("wpm-form");
     const fileInput = document.getElementById("page-images");
     const manualPagesInput = document.getElementById("manual-pages");
+    const totalPagesInput = document.getElementById("total-pages");
     const messageBox = document.getElementById("message-box");
     const resultsContainer = document.getElementById("results-container");
     const totalWordsSpan = document.getElementById("total-words");
@@ -200,7 +214,6 @@
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result;
-          // result is like "data:image/jpeg;base64,AAAA..."
           const base64 = result.split(",")[1];
           resolve(base64);
         };
@@ -286,6 +299,7 @@
       const seconds = parseInt(document.getElementById("time-seconds").value) || 0;
       const files = fileInput.files;
       const manualPages = parseInt(manualPagesInput.value) || 0;
+      const totalPages = parseInt(totalPagesInput.value) || 0;
 
       if (minutes === 0 && seconds === 0) {
         showMessage("Please enter the total reading time.", true);
@@ -304,7 +318,13 @@
       try {
         setLoading(true, "Analyzing pages...");
 
-        if (files.length > 0) {
+        if (files.length === 1 && totalPages > 0) {
+          // Scenario A: one sample page × total pages
+          const sampleCount = await countWordsForImage(files[0], 0, 1);
+          totalWords = sampleCount * totalPages;
+          methodDescription = `Calculated from 1 sample page (~${sampleCount} words) × ${totalPages} total pages.`;
+        } else if (files.length >= 1 && totalPages === 0) {
+          // Scenario B: multiple actual pages (or one page, but no totalPages)
           const wordCounts = [];
           for (let i = 0; i < files.length; i++) {
             const count = await countWordsForImage(files[i], i, files.length);
@@ -313,9 +333,14 @@
           totalWords = wordCounts.reduce((a, b) => a + b, 0);
           const avg = Math.round(totalWords / wordCounts.length);
           methodDescription = `Calculated directly from ${files.length} page image(s). Average words per page: ${avg}.`;
-        } else {
+        } else if (files.length === 0 && manualPages > 0) {
+          // Scenario C: manual pages only
           totalWords = manualPages * DEFAULT_WPP;
           methodDescription = `Used manual page count (${manualPages}) × ${DEFAULT_WPP} words per page (standard book average).`;
+        } else {
+          showMessage("Combination of options is unclear. Either:\n• 1 image + total pages, OR\n• multiple images, OR\n• no images + manual pages.", true);
+          setLoading(false);
+          return;
         }
 
         const wpm = totalWords / totalMinutes;
