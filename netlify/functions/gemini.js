@@ -1,28 +1,23 @@
 // netlify/functions/gemini.js
 
-// Simple Netlify function that calls Gemini's REST API using fetch
-// Expects body: { imageBase64: "..." }
-// Returns: { raw: "text from Gemini" }
+// Simple Netlify function that calls Gemini over plain HTTP.
+// No external npm packages required.
 
 exports.handler = async function (event) {
-  // Only allow POST
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ error: "Method not allowed" }),
     };
   }
 
   try {
-    const body = JSON.parse(event.body || "{}");
-    const imageBase64 = body.imageBase64;
+    const { imageBase64, mimeType } = JSON.parse(event.body || "{}");
 
     if (!imageBase64) {
       return {
         statusCode: 400,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Missing imageBase64 in request body" }),
+        body: JSON.stringify({ error: "Missing imageBase64 in body" }),
       };
     }
 
@@ -30,13 +25,13 @@ exports.handler = async function (event) {
     if (!apiKey) {
       return {
         statusCode: 500,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "GEMINI_API_KEY is not set on the server" }),
+        body: JSON.stringify({ error: "GEMINI_API_KEY is not set" }),
       };
     }
 
-    // IMPORTANT: use a model that exists for v1beta *without* "-latest"
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url =
+      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" +
+      apiKey;
 
     const payload = {
       contents: [
@@ -44,13 +39,13 @@ exports.handler = async function (event) {
           parts: [
             {
               text:
-                "You are a reading assistant. Count how many WORDS are " +
-                "visible in this page image. Return ONLY the number, with no other text.",
+                "Count how many WORDS are in this page. " +
+                "Reply with ONLY the number, no extra words.",
             },
             {
               inlineData: {
-                mimeType: "image/jpeg",
                 data: imageBase64,
+                mimeType: mimeType || "image/jpeg",
               },
             },
           ],
@@ -64,58 +59,37 @@ exports.handler = async function (event) {
       body: JSON.stringify(payload),
     });
 
-    const text = await response.text();
+    const data = await response.json();
 
     if (!response.ok) {
-      // Surface Gemini's error back to the front-end
       return {
         statusCode: response.status,
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           error: "Gemini API error",
-          details: text,
+          details: data,
         }),
       };
     }
 
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch (e) {
-      return {
-        statusCode: 500,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          error: "Unable to parse Gemini response as JSON",
-          details: text,
-        }),
-      };
-    }
-
-    // Grab the text Gemini returned (could be just a number or a short sentence)
-    const raw =
-      (json.candidates &&
-        json.candidates[0] &&
-        json.candidates[0].content &&
-        json.candidates[0].content.parts &&
-        json.candidates[0].content.parts
-          .map((p) => (p.text || "").trim())
-          .join(" ")
-          .trim()) ||
+    const text =
+      (data.candidates &&
+        data.candidates[0] &&
+        data.candidates[0].content &&
+        data.candidates[0].content.parts
+          .map((p) => p.text || "")
+          .join("")) ||
       "";
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ raw }),
+      body: JSON.stringify({ rawText: text }),
     };
   } catch (err) {
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        error: "Internal server error",
-        details: err.message || String(err),
+        error: "Request failed",
+        details: err.message,
       }),
     };
   }
