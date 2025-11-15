@@ -4,134 +4,168 @@
   <meta charset="UTF-8" />
   <title>Reading Speed Analyzer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     :root {
       --bg: #050816;
-      --bg-alt: #0f172a;
+      --panel: #0f172a;
       --accent: #6366f1;
-      --accent-soft: rgba(99, 102, 241, 0.15);
-      --danger: #ef4444;
-      --danger-soft: rgba(239, 68, 68, 0.12);
-      --text: #e5e7eb;
-      --muted: #9ca3af;
+      --accent-soft: rgba(99, 102, 241, 0.12);
+      --danger: #dc2626;
+      --danger-soft: rgba(220, 38, 38, 0.12);
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
       --border: #1f2937;
-      --radius-lg: 16px;
-      --radius-md: 10px;
-      --shadow-soft: 0 22px 40px rgba(15, 23, 42, 0.65);
+      --success: #22c55e;
     }
 
     * {
       box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Segoe UI", sans-serif;
     }
 
     body {
       margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 60%);
+      color: var(--text-main);
       min-height: 100vh;
-      background: radial-gradient(circle at top, #1f2937 0, #020617 52%, #000 100%);
-      color: var(--text);
       display: flex;
       justify-content: center;
-      padding: 24px 12px 40px;
+      padding: 32px 12px;
     }
 
     .app-shell {
       width: 100%;
-      max-width: 880px;
-      background: linear-gradient(135deg, #020617 0%, #020617 40%, #020617 100%);
+      max-width: 960px;
+      background: rgba(15, 23, 42, 0.95);
       border-radius: 24px;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      padding: 24px 24px 28px;
-      box-shadow: var(--shadow-soft);
-      position: relative;
-      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      padding: 24px 20px 28px;
+      box-shadow:
+        0 18px 45px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.2);
+      backdrop-filter: blur(18px);
     }
 
-    @media (min-width: 900px) {
-      .app-shell {
-        padding: 28px 32px 32px;
-      }
-    }
-
-    .app-header {
+    header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
       gap: 12px;
+      margin-bottom: 20px;
     }
 
-    .title-block h1 {
-      margin: 0;
-      font-size: clamp(26px, 2.4vw, 30px);
+    h1 {
+      font-size: 1.7rem;
       letter-spacing: 0.03em;
+      margin: 0;
+      white-space: nowrap;
     }
 
-    .title-sub {
-      margin: 2px 0 0;
-      font-size: 13px;
-      color: var(--muted);
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 4px 0 0;
     }
 
-    .icon-btn {
+    .header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      background: rgba(15, 118, 110, 0.18);
+      color: #99f6e4;
+      border: 1px solid rgba(45, 212, 191, 0.5);
+    }
+
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
+
+    .help-button {
+      width: 32px;
+      height: 32px;
       border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.4);
-      background: radial-gradient(circle at top, #1d2536 0, #020617 60%);
-      color: var(--text);
-      width: 34px;
-      height: 34px;
+      background: radial-gradient(circle at top left, #1e293b, #020617);
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      color: var(--text-main);
       cursor: pointer;
-      font-size: 15px;
-      font-weight: 600;
-      transition: all 0.14s ease-out;
+      transition: all 0.16s ease;
+      flex-shrink: 0;
     }
 
-    .icon-btn:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.35);
+    .help-button:hover {
+      box-shadow: 0 0 0 1px var(--accent);
       transform: translateY(-1px);
     }
 
-    .section {
-      margin-top: 18px;
+    .help-button span {
+      font-size: 0.95rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: linear-gradient(145deg, #020617, #0b1120);
+      border-radius: 18px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
       padding: 16px 16px 18px;
-      border-radius: var(--radius-lg);
-      background: radial-gradient(circle at top left, #020617 0, #020617 55%, #020617 100%);
-      border: 1px solid var(--border);
     }
 
-    .section h2 {
-      margin: 0 0 12px;
-      font-size: 17px;
+    .card h2 {
+      font-size: 1.05rem;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .sub {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: -6px;
-      margin-bottom: 12px;
+    .card h2 span.heading-pill {
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 1px 8px 2px;
+      border-radius: 999px;
+      border: 1px solid rgba(129, 140, 248, 0.4);
     }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+    .field-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
     }
 
-    @media (max-width: 640px) {
-      .grid-2 {
-        grid-template-columns: 1fr;
-      }
+    .field {
+      flex: 1 1 140px;
+      min-width: 0;
     }
 
     label {
-      font-size: 13px;
-      color: var(--muted);
       display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--text-muted);
       margin-bottom: 4px;
     }
 
@@ -139,434 +173,449 @@
     input[type="text"],
     input[type="file"] {
       width: 100%;
-      border-radius: 9px;
-      border: 1px solid rgba(55, 65, 81, 0.95);
-      background: radial-gradient(circle at top, #020617 0, #020617 60%, #020617 100%);
-      color: var(--text);
-      font-size: 14px;
-      padding: 9px 10px;
+      font-size: 0.9rem;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #020617;
+      color: var(--text-main);
       outline: none;
-      transition: border 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
     }
 
-    input::placeholder {
+    input[type="number"]::placeholder,
+    input[type="text"]::placeholder {
       color: #6b7280;
-      font-size: 13px;
     }
 
-    input:focus {
+    input[type="number"]:focus,
+    input[type="text"]:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.55);
+      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.8);
+      background: radial-gradient(circle at top, #020617, #020617);
     }
 
     input[type="file"] {
       padding: 7px 10px;
       cursor: pointer;
+      background: radial-gradient(circle at top left, #020617, #020617);
     }
 
     .hint {
-      font-size: 11px;
-      color: var(--muted);
+      font-size: 0.75rem;
+      color: var(--text-muted);
       margin-top: 4px;
     }
 
-    .btn-row {
+    .buttons-row {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
     }
 
-    @media (min-width: 640px) {
-      .btn-row {
-        flex-direction: row;
-      }
-    }
-
-    .btn-main,
-    .btn-reset {
-      flex: 1;
+    button.primary,
+    button.secondary {
+      flex: 1 1 160px;
+      min-width: 140px;
       border-radius: 999px;
       border: none;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 11px 16px;
       cursor: pointer;
-      padding: 11px 14px;
-      transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, opacity 0.12s;
+      transition: all 0.16s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 500;
     }
 
-    .btn-main {
-      background: radial-gradient(circle at top left, #4f46e5 0, #6366f1 40%, #4f46e5 100%);
-      color: white;
-      box-shadow: 0 16px 35px rgba(79, 70, 229, 0.55);
+    button.primary {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #eef2ff;
+      box-shadow: 0 8px 18px rgba(79, 70, 229, 0.5);
     }
 
-    .btn-main:hover {
+    button.primary:hover {
       transform: translateY(-1px);
-      box-shadow: 0 18px 40px rgba(79, 70, 229, 0.65);
+      box-shadow: 0 12px 26px rgba(79, 70, 229, 0.7);
     }
 
-    .btn-main:disabled,
-    .btn-reset:disabled {
-      opacity: 0.6;
+    button.secondary {
+      background: var(--danger-soft);
+      color: #fecaca;
+      border: 1px solid rgba(248, 113, 113, 0.8);
+    }
+
+    button.secondary:hover {
+      background: rgba(220, 38, 38, 0.22);
+    }
+
+    button:disabled {
+      opacity: 0.55;
       cursor: default;
       transform: none;
       box-shadow: none;
     }
 
-    .btn-reset {
-      background: #b91c1c;
-      background: linear-gradient(135deg, #b91c1c 0, #dc2626 35%, #b91c1c 100%);
-      color: #fee2e2;
-      box-shadow: 0 14px 32px rgba(220, 38, 38, 0.55);
-    }
-
-    .btn-reset:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 17px 38px rgba(220, 38, 38, 0.7);
-    }
-
     .status-line {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
-      min-height: 16px;
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
 
     .message {
-      margin-top: 10px;
-      padding: 9px 10px;
-      border-radius: 9px;
-      font-size: 13px;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 0.8rem;
+      line-height: 1.4;
       border: 1px solid transparent;
-    }
-
-    .message.hidden {
-      display: none;
     }
 
     .message.error {
       background: var(--danger-soft);
-      border-color: rgba(239, 68, 68, 0.8);
+      border-color: rgba(248, 113, 113, 0.7);
       color: #fecaca;
     }
 
     .message.info {
       background: var(--accent-soft);
-      border-color: rgba(129, 140, 248, 0.9);
+      border-color: rgba(129, 140, 248, 0.7);
       color: #e0e7ff;
     }
 
     .results {
-      margin-top: 18px;
-      padding: 14px 16px 14px;
-      border-radius: var(--radius-lg);
-      background: radial-gradient(circle at top, #020617 0, #020617 55%, #020617 100%);
-      border: 1px solid rgba(55, 65, 81, 0.95);
+      margin-top: 16px;
+      padding: 12px 14px 14px;
+      border-radius: 18px;
+      background: radial-gradient(circle at top left, #020617, #020617);
+      border: 1px solid rgba(55, 65, 81, 0.9);
     }
 
-    .results.hidden {
-      display: none;
-    }
-
-    .results-title {
-      font-size: 15px;
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       margin-bottom: 8px;
-      font-weight: 600;
+    }
+
+    .results-header h3 {
+      margin: 0;
+      font-size: 0.98rem;
     }
 
     .result-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 10px;
-      margin-bottom: 12px;
+      margin-top: 4px;
     }
 
-    @media (max-width: 600px) {
-      .result-grid {
-        grid-template-columns: 1fr;
-      }
+    .stat {
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #020617;
+      border: 1px solid rgba(31, 41, 55, 0.9);
     }
 
-    .result-card {
-      padding: 10px 11px;
-      border-radius: 11px;
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.96));
-      border: 1px solid rgba(31, 41, 55, 0.95);
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
     }
 
-    .result-label {
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
-
-    .result-value {
-      font-size: 18px;
+    .stat-value {
+      font-size: 1.1rem;
       font-weight: 600;
     }
 
-    .result-value.level {
-      text-transform: capitalize;
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
     }
 
-    .method-text {
-      font-size: 12px;
-      color: var(--muted);
+    .badge.level {
+      background: rgba(59, 130, 246, 0.14);
+      color: #bfdbfe;
+      border: 1px solid rgba(59, 130, 246, 0.6);
     }
 
-    /* Help modal */
+    .badge.good {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      color: #bbf7d0;
+    }
+
+    .results-note {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Modal */
 
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.78);
+      background: rgba(15, 23, 42, 0.8);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 30;
-      padding: 16px;
+      z-index: 40;
     }
 
-    .modal-backdrop.hidden {
-      display: none;
-    }
-
-    .modal-panel {
-      max-width: 520px;
-      width: 100%;
-      border-radius: 18px;
+    .modal {
       background: #020617;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      box-shadow: 0 24px 55px rgba(15, 23, 42, 0.9);
-      padding: 16px 18px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 18px 18px 16px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.9);
     }
 
     .modal-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 8px;
     }
 
-    .modal-title {
-      font-size: 16px;
+    .modal-header h3 {
       margin: 0;
+      font-size: 1rem;
     }
 
     .modal-close {
       border: none;
-      border-radius: 999px;
-      width: 26px;
-      height: 26px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--muted);
+      background: transparent;
+      color: var(--text-muted);
       cursor: pointer;
-      font-size: 14px;
-      transition: background 0.12s, color 0.12s;
-    }
-
-    .modal-close:hover {
-      background: #111827;
-      color: #e5e7eb;
+      font-size: 1.1rem;
+      padding: 2px 4px;
     }
 
     .modal-body {
-      font-size: 13px;
-      color: var(--muted);
+      font-size: 0.82rem;
+      color: var(--text-main);
     }
 
-    .levels-list {
-      margin: 8px 0 0;
-      padding-left: 16px;
-      font-size: 12px;
+    .modal-body ul {
+      margin: 6px 0 4px 18px;
+      padding: 0;
     }
 
-    .levels-list li {
-      margin-bottom: 3px;
+    .modal-body li {
+      margin-bottom: 4px;
     }
 
-    .levels-list strong {
-      color: #e5e7eb;
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .app-shell {
+        padding: 18px 14px 20px;
+        border-radius: 18px;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      .field-row {
+        flex-direction: column;
+      }
+      button.primary,
+      button.secondary {
+        flex: 1 1 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <main class="app-shell">
-    <header class="app-header">
-      <div class="title-block">
+  <div class="app-shell">
+    <header>
+      <div class="header-text">
         <h1>Reading Speed Analyzer</h1>
-        <p class="title-sub">
-          Upload a sample page or enter page count to estimate your reading speed and level.
-        </p>
+        <div class="pill">
+          <span class="pill-dot"></span>
+          Uses your Gemini API key (via Netlify function). Nothing is stored between runs.
+        </div>
       </div>
-      <button type="button" id="help-btn" class="icon-btn" aria-label="How this works">
-        i
+      <button id="helpButton" class="help-button" type="button" aria-label="How this tool works">
+        <span>i</span>
       </button>
     </header>
 
-    <form id="analyzer-form" autocomplete="off" novalidate>
-      <!-- Reading Time -->
-      <section class="section">
-        <h2>1. Reading Time</h2>
-        <p class="sub">Enter how long you were reading.</p>
-        <div class="grid-2">
-          <div>
-            <label for="minutes">Minutes (M)</label>
-            <input type="number" id="minutes" min="0" step="1" placeholder="e.g. 10" required />
+    <form id="readingForm">
+      <!-- 1. Reading Time -->
+      <section class="card">
+        <h2>1. Reading Time <span class="heading-pill">Required</span></h2>
+        <p class="hint">Enter how long you were reading.</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="minutesInput">Minutes (M)</label>
+            <input id="minutesInput" type="number" min="0" step="1" placeholder="e.g. 5" />
           </div>
-          <div>
-            <label for="seconds">Seconds (S)</label>
-            <input type="number" id="seconds" min="0" max="59" step="1" placeholder="e.g. 30" />
+          <div class="field">
+            <label for="secondsInput">Seconds (S)</label>
+            <input id="secondsInput" type="number" min="0" max="59" step="1" placeholder="e.g. 30" />
           </div>
         </div>
       </section>
 
-      <!-- Page Measurement -->
-      <section class="section">
-        <h2>2. Page Measurement</h2>
-        <p class="sub">
-          Choose one of these setups:
-          <br />• Upload <strong>1 sample page</strong> and enter total pages read,
-          <br />• Upload <strong>each page</strong> you read, or
-          <br />• Enter page count manually (no images).
+      <!-- 2. Page Measurement -->
+      <section class="card">
+        <h2>2. Page Measurement <span class="heading-pill">Choose one setup</span></h2>
+        <p class="hint">
+          Option A: upload <strong>1 sample page</strong> + total pages read. <br />
+          Option B: upload <strong>every page</strong> you read. <br />
+          Option C: no images &mdash; enter pages manually (we estimate using 300 words/page).
         </p>
 
-        <div style="margin-bottom: 10px;">
-          <label for="page-images">Upload Page Images (1 = sample, multiple = each page)</label>
-          <input
-            type="file"
-            id="page-images"
-            accept="image/*"
-            multiple
-          />
-          <p class="hint">
-            Clear, well-lit photos of the page work best.
-          </p>
+        <div class="field-row" style="margin-top: 12px;">
+          <div class="field">
+            <label for="fileInput">Upload Page Images</label>
+            <input id="fileInput" type="file" accept="image/*" multiple />
+            <p class="hint">Clear, well-lit photos of the page work best.</p>
+          </div>
         </div>
 
-        <div style="margin-bottom: 10px;">
-          <label for="total-pages">Total pages read (only if you uploaded exactly 1 sample page)</label>
-          <input
-            type="number"
-            id="total-pages"
-            min="1"
-            step="1"
-            placeholder="e.g. 5"
-          />
-          <p class="hint">
-            Example: upload 1 clear sample page, enter 5 here if you read 5 similar pages.
-          </p>
+        <div class="field-row" style="margin-top: 10px;">
+          <div class="field">
+            <label for="totalPagesInput">Total pages read (if exactly 1 sample page)</label>
+            <input id="totalPagesInput" type="number" min="0" step="1" placeholder="e.g. 5" />
+            <p class="hint">
+              Example: upload one clear sample page, enter <strong>5</strong> here if you read 5 similar pages.
+            </p>
+          </div>
         </div>
 
-        <div>
-          <label for="manual-pages">Manual Page Count (if no images)</label>
-          <input
-            type="number"
-            id="manual-pages"
-            min="1"
-            step="1"
-            placeholder="e.g. 10"
-          />
-          <p class="hint">
-            If you don't upload images, we estimate using <strong>300 words per page</strong>.
-          </p>
+        <div class="field-row" style="margin-top: 10px;">
+          <div class="field">
+            <label for="manualPagesInput">Manual page count (if no images)</label>
+            <input id="manualPagesInput" type="number" min="0" step="1" placeholder="e.g. 10" />
+            <p class="hint">
+              If you don't upload images, we estimate using <strong>300 words per page</strong>.
+            </p>
+          </div>
         </div>
       </section>
 
-      <div class="btn-row">
-        <button type="submit" class="btn-main" id="submit-btn">
+      <!-- Buttons & status -->
+      <div class="buttons-row">
+        <button class="primary" type="submit" id="calculateButton">
           Calculate Reading Speed
         </button>
-        <button type="button" class="btn-reset" id="reset-btn">
+        <button class="secondary" type="button" id="resetButton">
           New Calculation (Full Reset)
         </button>
       </div>
 
-      <div id="status-line" class="status-line"></div>
-      <div id="message" class="message hidden"></div>
+      <div id="statusLine" class="status-line"></div>
+      <div id="messageBox" class="message hidden"></div>
 
-      <section id="results" class="results hidden" aria-live="polite">
-        <div class="results-title">Results</div>
+      <!-- Results -->
+      <section id="resultsSection" class="results hidden" aria-live="polite">
+        <div class="results-header">
+          <h3>Results</h3>
+          <span class="badge good">
+            <span>Live</span>
+          </span>
+        </div>
+
         <div class="result-grid">
-          <div class="result-card">
-            <div class="result-label">Total Words Read</div>
-            <div id="total-words" class="result-value">0</div>
+          <div class="stat">
+            <div class="stat-label">Total Words Read</div>
+            <div class="stat-value" id="totalWordsValue">0</div>
           </div>
-          <div class="result-card">
-            <div class="result-label">Words Per Minute (WPM)</div>
-            <div id="wpm" class="result-value">0</div>
+          <div class="stat">
+            <div class="stat-label">Words per Minute</div>
+            <div class="stat-value" id="wpmValue">0</div>
           </div>
-          <div class="result-card">
-            <div class="result-label">Reading Level</div>
-            <div id="level" class="result-value level">–</div>
+          <div class="stat">
+            <div class="stat-label">Reading Level</div>
+            <div class="stat-value">
+              <span id="levelValue">–</span>
+            </div>
           </div>
         </div>
-        <p id="method-used" class="method-text"></p>
+
+        <p id="methodUsed" class="results-note"></p>
       </section>
     </form>
-  </main>
+  </div>
 
-  <!-- Help modal -->
-  <div id="help-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal-panel">
+  <!-- Help Modal -->
+  <div id="helpModal" class="modal-backdrop hidden">
+    <div class="modal">
       <div class="modal-header">
-        <h2 class="modal-title">How this tool works</h2>
-        <button type="button" id="help-close" class="modal-close" aria-label="Close help">
-          ×
-        </button>
+        <h3>How this tool works</h3>
+        <button class="modal-close" type="button" id="helpCloseBtn">&times;</button>
       </div>
       <div class="modal-body">
-        <p style="margin-top: 0; margin-bottom: 6px;">
-          1. Time yourself while reading.<br />
-          2. Upload a sample page (or each page) <em>or</em> just enter how many pages you read.<br />
-          3. The app estimates how many words you read and calculates your words per minute.
-        </p>
-        <p style="margin-bottom: 4px;">
-          Levels (assuming normal difficulty text):
-        </p>
-        <ul class="levels-list">
-          <li><strong>Beginner</strong>: under 150 wpm</li>
-          <li><strong>Intermediate</strong>: 150–250 wpm</li>
-          <li><strong>Advanced</strong>: 250–350 wpm</li>
-          <li><strong>Expert</strong>: 350–450 wpm</li>
-          <li><strong>Master</strong>: 450+ wpm</li>
+        <p><strong>Inputs</strong></p>
+        <ul>
+          <li><strong>Time:</strong> Minutes and seconds you spent reading.</li>
+          <li>
+            <strong>Images:</strong> Upload either one sample page (plus total pages),
+            or every page you read.
+          </li>
+          <li>
+            <strong>Manual pages:</strong> If you don't use images, we estimate with
+            300 words per page.
+          </li>
         </ul>
+        <p><strong>Output</strong></p>
+        <ul>
+          <li>Total words read in your session.</li>
+          <li>Words per minute (WPM).</li>
+          <li>A reading speed category (Beginner → Master).</li>
+        </ul>
+        <p>
+          Each calculation is fresh. Images are sent to Gemini through a Netlify
+          function using your API key on the server; nothing is stored between runs.
+        </p>
       </div>
     </div>
   </div>
 
   <script>
-    // ====== DOM elements ======
-    const form = document.getElementById("analyzer-form");
-    const minutesInput = document.getElementById("minutes");
-    const secondsInput = document.getElementById("seconds");
-    const fileInput = document.getElementById("page-images");
-    const totalPagesInput = document.getElementById("total-pages");
-    const manualPagesInput = document.getElementById("manual-pages");
+    // ---------- DOM references ----------
+    const form = document.getElementById("readingForm");
+    const minutesInput = document.getElementById("minutesInput");
+    const secondsInput = document.getElementById("secondsInput");
+    const fileInput = document.getElementById("fileInput");
+    const totalPagesInput = document.getElementById("totalPagesInput");
+    const manualPagesInput = document.getElementById("manualPagesInput");
 
-    const submitBtn = document.getElementById("submit-btn");
-    const resetBtn = document.getElementById("reset-btn");
+    const calculateButton = document.getElementById("calculateButton");
+    const resetButton = document.getElementById("resetButton");
+    const statusLine = document.getElementById("statusLine");
+    const messageBox = document.getElementById("messageBox");
 
-    const statusLine = document.getElementById("status-line");
-    const messageBox = document.getElementById("message");
+    const resultsSection = document.getElementById("resultsSection");
+    const totalWordsValue = document.getElementById("totalWordsValue");
+    const wpmValue = document.getElementById("wpmValue");
+    const levelValue = document.getElementById("levelValue");
+    const methodUsed = document.getElementById("methodUsed");
 
-    const resultsContainer = document.getElementById("results");
-    const totalWordsSpan = document.getElementById("total-words");
-    const wpmSpan = document.getElementById("wpm");
-    const levelSpan = document.getElementById("level");
-    const methodUsedP = document.getElementById("method-used");
+    const helpButton = document.getElementById("helpButton");
+    const helpModal = document.getElementById("helpModal");
+    const helpCloseBtn = document.getElementById("helpCloseBtn");
 
-    const helpBtn = document.getElementById("help-btn");
-    const helpModal = document.getElementById("help-modal");
-    const helpClose = document.getElementById("help-close");
+    const GEMINI_ENDPOINT = "/.netlify/functions/gemini";
+    const DEFAULT_WPP = 300;
 
-    const DEFAULT_WORDS_PER_PAGE = 300;
-
-    // ====== Helpers ======
+    // ---------- Helpers ----------
     function showMessage(text, isError = false) {
       if (!text) {
         messageBox.classList.add("hidden");
@@ -579,37 +628,29 @@
       messageBox.classList.toggle("info", !isError);
     }
 
-    function clearMessage() {
-      showMessage("");
-    }
-
-    function setLoading(isLoading) {
-      submitBtn.disabled = isLoading;
-      resetBtn.disabled = isLoading;
-      if (isLoading) {
-        submitBtn.textContent = "Analyzing...";
-      } else {
-        submitBtn.textContent = "Calculate Reading Speed";
-      }
+    function setLoading(isLoading, label) {
+      calculateButton.disabled = isLoading;
+      resetButton.disabled = isLoading;
+      calculateButton.textContent = isLoading ? label || "Analyzing..." : "Calculate Reading Speed";
     }
 
     function classifyLevel(wpm) {
-      if (wpm < 150) return "beginner";
-      if (wpm < 250) return "intermediate";
-      if (wpm < 350) return "advanced";
-      if (wpm < 450) return "expert";
-      return "master";
+      if (wpm < 150) return "Beginner";
+      if (wpm < 250) return "Intermediate";
+      if (wpm < 350) return "Advanced";
+      if (wpm < 450) return "Expert";
+      return "Master";
     }
 
-    function fileToBase64(file) {
+    function toBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
-          const result = reader.result;
-          const base64 = result.split(",")[1]; // remove "data:*/*;base64,"
+          const result = reader.result || "";
+          const base64 = result.toString().split(",")[1] || "";
           resolve(base64);
         };
-        reader.onerror = () => reject(new Error("Could not read image file."));
+        reader.onerror = () => reject(reader.error || new Error("FileReader error"));
         reader.readAsDataURL(file);
       });
     }
@@ -617,148 +658,140 @@
     async function countWordsForImage(file, index, total) {
       statusLine.textContent = `Analyzing page ${index + 1} of ${total} with Gemini...`;
 
-      const imageBase64 = await fileToBase64(file);
+      const imageBase64 = await toBase64(file);
 
-      const response = await fetch("/.netlify/functions/gemini", {
+      const response = await fetch(GEMINI_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64 }),
       });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(
-          `Gemini error (${response.status}): ${errText || "Unable to analyze image."}`
-        );
+      const payloadText = await response.text();
+      let payload;
+      try {
+        payload = JSON.parse(payloadText);
+      } catch {
+        throw new Error("Unexpected response from Gemini: " + payloadText.slice(0, 120));
       }
 
-      const data = await response.json();
-      const raw = data.raw || data.text || "";
+      if (!response.ok) {
+        const errDetail = payload.error || payload.details || payloadText;
+        throw new Error("Gemini error: " + JSON.stringify(errDetail));
+      }
 
-      // Expect a number like "312" somewhere in the text.
-      const numberMatch = String(raw).match(/\d+/);
-      if (!numberMatch) {
-        console.error("Gemini raw response (no number found):", raw);
+      const raw = payload.raw || "";
+      const match = raw.match(/\d+/);
+      if (!match) {
         throw new Error("Could not read a word count from Gemini response.");
       }
-
-      const count = parseInt(numberMatch[0], 10);
-      if (!Number.isFinite(count) || count <= 0) {
-        throw new Error("Gemini returned an invalid word count.");
-      }
-
-      return count;
+      return parseInt(match[0], 10);
     }
 
-    // ====== Main submit handler ======
-    async function handleSubmit(event) {
-      event.preventDefault();
-      clearMessage();
-      resultsContainer.classList.add("hidden");
+    function resetUI() {
+      form.reset();
+      showMessage("");
       statusLine.textContent = "";
+      resultsSection.classList.add("hidden");
+      totalWordsValue.textContent = "0";
+      wpmValue.textContent = "0";
+      levelValue.textContent = "–";
+      methodUsed.textContent = "";
+    }
+
+    // ---------- Main submit handler ----------
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      showMessage("");
+      resultsSection.classList.add("hidden");
 
       const minutes = Number(minutesInput.value || "0");
       const seconds = Number(secondsInput.value || "0");
+      const totalSeconds = minutes * 60 + seconds;
 
-      if (minutes < 0 || seconds < 0) {
-        showMessage("Time values cannot be negative.", true);
+      if (!totalSeconds || totalSeconds <= 0) {
+        showMessage("Please enter a reading time greater than zero.", true);
         return;
       }
 
-      const totalMinutes = minutes + seconds / 60;
-      if (!totalMinutes || totalMinutes <= 0) {
-        showMessage("Please enter a reading time greater than 0.", true);
-        return;
-      }
-
-      const files = fileInput.files || [];
+      const files = Array.from(fileInput.files || []);
       const totalPages = Number(totalPagesInput.value || "0");
       const manualPages = Number(manualPagesInput.value || "0");
 
-      if (files.length === 0 && manualPages <= 0) {
-        showMessage(
-          "Please either upload at least one page image or enter a manual page count.",
-          true
-        );
+      if (files.length && manualPages) {
+        showMessage("Use either images or manual pages, not both at the same time.", true);
         return;
       }
 
-      let totalWords = 0;
-      let methodDescription = "";
+      setLoading(true, "Analyzing with Gemini...");
+      statusLine.textContent = "";
 
       try {
-        setLoading(true);
-        statusLine.textContent = "Starting analysis...";
+        let totalWords = 0;
+        let methodDesc = "";
 
         if (files.length === 1 && totalPages > 0) {
           // Scenario A: 1 sample page + total pages
           const sampleWords = await countWordsForImage(files[0], 0, 1);
           totalWords = sampleWords * totalPages;
-          methodDescription = `Used 1 sample page (~${sampleWords.toLocaleString()} words) × ${totalPages} page(s).`;
-        } else if (files.length > 0) {
-          // Scenario B: multiple actual pages (or 1 page without totalPages)
-          const wordCounts = [];
+          methodDesc = `One sample page (${sampleWords.toLocaleString()} words) × ${totalPages} pages.`;
+        } else if (files.length >= 1 && totalPages === 0) {
+          // Scenario B: multiple actual pages
+          const counts = [];
           for (let i = 0; i < files.length; i++) {
             const count = await countWordsForImage(files[i], i, files.length);
-            wordCounts.push(count);
+            counts.push(count);
           }
-          totalWords = wordCounts.reduce((a, b) => a + b, 0);
-          const avg = Math.round(totalWords / wordCounts.length);
-          methodDescription = `Calculated directly from ${files.length} page image(s). Average words per page: ${avg.toLocaleString()}.`;
-        } else if (files.length === 0 && manualPages > 0) {
-          // Scenario C: manual pages only
-          totalWords = manualPages * DEFAULT_WORDS_PER_PAGE;
-          methodDescription = `Used manual page count (${manualPages}) × ${DEFAULT_WORDS_PER_PAGE} words per page (standard book average).`;
+          totalWords = counts.reduce((a, b) => a + b, 0);
+          const avg = Math.round(totalWords / counts.length);
+          methodDesc = `Calculated from ${files.length} page image(s). Average words/page ≈ ${avg}.`;
+        } else if (!files.length && manualPages > 0) {
+          // Scenario C: no images, only manual pages
+          totalWords = manualPages * DEFAULT_WPP;
+          methodDesc = `Manual pages (${manualPages}) × ${DEFAULT_WPP} words/page (standard book estimate).`;
         } else {
           showMessage(
-            "Combination of options is unclear. Either: (a) 1 image + total pages, (b) multiple images, or (c) no images + manual pages.",
+            "Please choose one setup: (1) one image + total pages, (2) multiple images, or (3) no images + manual pages.",
             true
           );
           setLoading(false);
           return;
         }
 
-        const wpm = totalWords / totalMinutes;
+        const wpm = totalWords / (totalSeconds / 60);
         const level = classifyLevel(wpm);
 
-        totalWordsSpan.textContent = Math.round(totalWords).toLocaleString();
-        wpmSpan.textContent = Math.round(wpm).toLocaleString();
-        levelSpan.textContent = level;
-        methodUsedP.textContent = methodDescription;
+        totalWordsValue.textContent = Math.round(totalWords).toLocaleString();
+        wpmValue.textContent = Math.round(wpm).toLocaleString();
+        levelValue.textContent = level;
+        methodUsed.textContent = methodDesc;
 
-        resultsContainer.classList.remove("hidden");
+        resultsSection.classList.remove("hidden");
         statusLine.textContent = "Done.";
-      } catch (error) {
-        console.error(error);
-        showMessage(error.message || "Something went wrong while contacting Gemini.", true);
+      } catch (err) {
+        console.error(err);
+        showMessage(err.message || "Something went wrong while contacting Gemini.", true);
         statusLine.textContent = "";
       } finally {
         setLoading(false);
       }
-    }
+    });
 
-    // ====== Reset & help ======
-    function fullReset() {
-      form.reset();
-      clearMessage();
-      resultsContainer.classList.add("hidden");
-      statusLine.textContent = "";
-      totalWordsSpan.textContent = "0";
-      wpmSpan.textContent = "0";
-      levelSpan.textContent = "–";
-    }
+    // ---------- Reset ----------
+    resetButton.addEventListener("click", () => {
+      resetUI();
+    });
 
-    resetBtn.addEventListener("click", fullReset);
-    form.addEventListener("submit", handleSubmit);
-
-    helpBtn.addEventListener("click", () => {
+    // ---------- Help modal ----------
+    helpButton.addEventListener("click", () => {
       helpModal.classList.remove("hidden");
     });
-    helpClose.addEventListener("click", () => {
+
+    helpCloseBtn.addEventListener("click", () => {
       helpModal.classList.add("hidden");
     });
-    helpModal.addEventListener("click", (event) => {
-      if (event.target === helpModal) {
+
+    helpModal.addEventListener("click", (e) => {
+      if (e.target === helpModal) {
         helpModal.classList.add("hidden");
       }
     });
