@@ -1,800 +1,600 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Reading Speed Analyzer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <style>
-    :root {
-      --bg: #050816;
-      --panel: #0f172a;
-      --accent: #6366f1;
-      --accent-soft: rgba(99, 102, 241, 0.12);
-      --danger: #dc2626;
-      --danger-soft: rgba(220, 38, 38, 0.12);
-      --text-main: #f9fafb;
-      --text-muted: #9ca3af;
-      --border: #1f2937;
-      --success: #22c55e;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #111827 0, #020617 60%);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 32px 12px;
-    }
-
-    .app-shell {
-      width: 100%;
-      max-width: 960px;
-      background: rgba(15, 23, 42, 0.95);
-      border-radius: 24px;
-      border: 1px solid rgba(148, 163, 184, 0.15);
-      padding: 24px 20px 28px;
-      box-shadow:
-        0 18px 45px rgba(15, 23, 42, 0.9),
-        0 0 0 1px rgba(148, 163, 184, 0.2);
-      backdrop-filter: blur(18px);
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    h1 {
-      font-size: 1.7rem;
-      letter-spacing: 0.03em;
-      margin: 0;
-      white-space: nowrap;
-    }
-
-    .subtitle {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin: 4px 0 0;
-    }
-
-    .header-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      background: rgba(15, 118, 110, 0.18);
-      color: #99f6e4;
-      border: 1px solid rgba(45, 212, 191, 0.5);
-    }
-
-    .pill-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
-    }
-
-    .help-button {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      background: radial-gradient(circle at top left, #1e293b, #020617);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-main);
-      cursor: pointer;
-      transition: all 0.16s ease;
-      flex-shrink: 0;
-    }
-
-    .help-button:hover {
-      box-shadow: 0 0 0 1px var(--accent);
-      transform: translateY(-1px);
-    }
-
-    .help-button span {
-      font-size: 0.95rem;
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .card {
-      background: linear-gradient(145deg, #020617, #0b1120);
-      border-radius: 18px;
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      padding: 16px 16px 18px;
-    }
-
-    .card h2 {
-      font-size: 1.05rem;
-      margin: 0 0 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .card h2 span.heading-pill {
-      font-size: 0.75rem;
-      color: var(--accent);
-      background: var(--accent-soft);
-      padding: 1px 8px 2px;
-      border-radius: 999px;
-      border: 1px solid rgba(129, 140, 248, 0.4);
-    }
-
-    .field-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 10px;
-    }
-
-    .field {
-      flex: 1 1 140px;
-      min-width: 0;
-    }
-
-    label {
-      display: block;
-      font-size: 0.78rem;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-
-    input[type="number"],
-    input[type="text"],
-    input[type="file"] {
-      width: 100%;
-      font-size: 0.9rem;
-      padding: 9px 11px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: #020617;
-      color: var(--text-main);
-      outline: none;
-      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-    }
-
-    input[type="number"]::placeholder,
-    input[type="text"]::placeholder {
-      color: #6b7280;
-    }
-
-    input[type="number"]:focus,
-    input[type="text"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.8);
-      background: radial-gradient(circle at top, #020617, #020617);
-    }
-
-    input[type="file"] {
-      padding: 7px 10px;
-      cursor: pointer;
-      background: radial-gradient(circle at top left, #020617, #020617);
-    }
-
-    .hint {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    .buttons-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    button.primary,
-    button.secondary {
-      flex: 1 1 160px;
-      min-width: 140px;
-      border-radius: 999px;
-      border: none;
-      font-size: 0.95rem;
-      padding: 11px 16px;
-      cursor: pointer;
-      transition: all 0.16s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-weight: 500;
-    }
-
-    button.primary {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      color: #eef2ff;
-      box-shadow: 0 8px 18px rgba(79, 70, 229, 0.5);
-    }
-
-    button.primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 26px rgba(79, 70, 229, 0.7);
-    }
-
-    button.secondary {
-      background: var(--danger-soft);
-      color: #fecaca;
-      border: 1px solid rgba(248, 113, 113, 0.8);
-    }
-
-    button.secondary:hover {
-      background: rgba(220, 38, 38, 0.22);
-    }
-
-    button:disabled {
-      opacity: 0.55;
-      cursor: default;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .status-line {
-      margin-top: 6px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .message {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      font-size: 0.8rem;
-      line-height: 1.4;
-      border: 1px solid transparent;
-    }
-
-    .message.error {
-      background: var(--danger-soft);
-      border-color: rgba(248, 113, 113, 0.7);
-      color: #fecaca;
-    }
-
-    .message.info {
-      background: var(--accent-soft);
-      border-color: rgba(129, 140, 248, 0.7);
-      color: #e0e7ff;
-    }
-
-    .results {
-      margin-top: 16px;
-      padding: 12px 14px 14px;
-      border-radius: 18px;
-      background: radial-gradient(circle at top left, #020617, #020617);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-    }
-
-    .results-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-
-    .results-header h3 {
-      margin: 0;
-      font-size: 0.98rem;
-    }
-
-    .result-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-top: 4px;
-    }
-
-    .stat {
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: #020617;
-      border: 1px solid rgba(31, 41, 55, 0.9);
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-    }
-
-    .badge.level {
-      background: rgba(59, 130, 246, 0.14);
-      color: #bfdbfe;
-      border: 1px solid rgba(59, 130, 246, 0.6);
-    }
-
-    .badge.good {
-      background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.6);
-      color: #bbf7d0;
-    }
-
-    .results-note {
-      margin-top: 6px;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    /* Modal */
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 40;
-    }
-
-    .modal {
-      background: #020617;
-      border-radius: 20px;
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      padding: 18px 18px 16px;
-      max-width: 420px;
-      width: 100%;
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.9);
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .modal-header h3 {
-      margin: 0;
-      font-size: 1rem;
-    }
-
-    .modal-close {
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 1.1rem;
-      padding: 2px 4px;
-    }
-
-    .modal-body {
-      font-size: 0.82rem;
-      color: var(--text-main);
-    }
-
-    .modal-body ul {
-      margin: 6px 0 4px 18px;
-      padding: 0;
-    }
-
-    .modal-body li {
-      margin-bottom: 4px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    @media (max-width: 640px) {
-      .app-shell {
-        padding: 18px 14px 20px;
-        border-radius: 18px;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Reading Speed Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg: #050816;
+        --card: #0b1020;
+        --accent: #7c3aed;
+        --accent-soft: #4c1d95;
+        --accent-strong: #a855f7;
+        --text-main: #f9fafb;
+        --text-muted: #9ca3af;
+        --danger: #dc2626;
+        --danger-soft: #7f1d1d;
+        --border-subtle: #1f2933;
       }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
+        color: var(--text-main);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 32px 16px 48px;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 900px;
+        background: linear-gradient(145deg, #020617, #020617);
+        border-radius: 24px;
+        padding: 24px 20px 28px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+      }
+
+      @media (min-width: 768px) {
+        .app {
+          padding: 28px 32px 32px;
+        }
+      }
+
       h1 {
-        font-size: 1.4rem;
+        margin: 0 0 16px;
+        font-size: 1.75rem;
+        letter-spacing: 0.04em;
       }
-      .field-row {
-        flex-direction: column;
-      }
-      button.primary,
-      button.secondary {
-        flex: 1 1 100%;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="app-shell">
-    <header>
-      <div class="header-text">
-        <h1>Reading Speed Analyzer</h1>
-        <div class="pill">
-          <span class="pill-dot"></span>
-          Uses your Gemini API key (via Netlify function). Nothing is stored between runs.
-        </div>
-      </div>
-      <button id="helpButton" class="help-button" type="button" aria-label="How this tool works">
-        <span>i</span>
-      </button>
-    </header>
 
-    <form id="readingForm">
-      <!-- 1. Reading Time -->
-      <section class="card">
-        <h2>1. Reading Time <span class="heading-pill">Required</span></h2>
-        <p class="hint">Enter how long you were reading.</p>
+      p.lead {
+        margin: 0 0 18px;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+      }
+
+      .section {
+        margin-top: 18px;
+        background: radial-gradient(circle at top left, #111827 0, #020617 55%);
+        border-radius: 18px;
+        padding: 18px 16px 18px;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .section-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+      }
+
+      .tag {
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        color: var(--text-muted);
+      }
+
+      .field-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      @media (min-width: 700px) {
+        .field-row {
+          flex-direction: row;
+        }
+      }
+
+      .field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      input[type="number"],
+      input[type="text"] {
+        width: 100%;
+        padding: 9px 11px;
+        border-radius: 9px;
+        border: 1px solid var(--border-subtle);
+        background: #020617;
+        color: var(--text-main);
+        font-size: 0.9rem;
+      }
+
+      input::placeholder {
+        color: #4b5563;
+      }
+
+      input:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+        border-color: transparent;
+      }
+
+      input[type="file"] {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      small.hint {
+        font-size: 0.8rem;
+        color: #6b7280;
+      }
+
+      .button-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      @media (min-width: 640px) {
+        .button-row {
+          flex-direction: row;
+        }
+      }
+
+      button {
+        border-radius: 999px;
+        border: none;
+        padding: 10px 18px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        transition: transform 0.1s ease, box-shadow 0.1s ease,
+          background 0.1s ease, opacity 0.1s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+        color: white;
+        flex: 1;
+        box-shadow: 0 12px 30px rgba(124, 58, 237, 0.55);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 40px rgba(124, 58, 237, 0.7);
+      }
+
+      .btn-secondary {
+        background: var(--card);
+        color: var(--text-muted);
+        flex: 1;
+        border: 1px solid rgba(75, 85, 99, 0.9);
+      }
+
+      .btn-secondary:hover {
+        background: #111827;
+      }
+
+      .btn-primary:disabled,
+      .btn-secondary:disabled {
+        opacity: 0.55;
+        cursor: default;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .status-line {
+        margin-top: 10px;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+
+      .message {
+        margin-top: 10px;
+        padding: 9px 11px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+      }
+
+      .message.error {
+        background: var(--danger-soft);
+        color: #fecaca;
+        border: 1px solid rgba(248, 113, 113, 0.7);
+      }
+
+      .message.info {
+        background: #111827;
+        color: var(--text-muted);
+        border: 1px solid rgba(75, 85, 99, 0.8);
+      }
+
+      .results {
+        margin-top: 20px;
+        padding: 16px 15px 14px;
+        border-radius: 16px;
+        background: radial-gradient(circle at top left, #1d283a 0, #020617 60%);
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        display: none;
+      }
+
+      .results-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      @media (min-width: 600px) {
+        .results-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      .result-item {
+        padding: 10px 11px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(30, 64, 175, 0.8);
+      }
+
+      .result-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .result-value {
+        font-size: 1.25rem;
+        margin-top: 3px;
+      }
+
+      .level-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        background: rgba(22, 163, 74, 0.16);
+        border: 1px solid rgba(22, 163, 74, 0.6);
+        color: #bbf7d0;
+      }
+
+      .method-used {
+        margin-top: 12px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>Reading Speed Analyzer</h1>
+        <p class="lead">
+          Upload a page (or enter pages manually), add your reading time, and
+          see your estimated words per minute.
+        </p>
+      </header>
+
+      <!-- 1. Reading time -->
+      <section class="section">
+        <div class="section-header">
+          <span class="section-title">1. Reading Time</span>
+          <span class="tag">Required</span>
+        </div>
         <div class="field-row">
           <div class="field">
-            <label for="minutesInput">Minutes (M)</label>
-            <input id="minutesInput" type="number" min="0" step="1" placeholder="e.g. 5" />
+            <label for="minutesInput">Minutes</label>
+            <input
+              id="minutesInput"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="e.g. 5"
+            />
           </div>
           <div class="field">
-            <label for="secondsInput">Seconds (S)</label>
-            <input id="secondsInput" type="number" min="0" max="59" step="1" placeholder="e.g. 30" />
+            <label for="secondsInput">Seconds</label>
+            <input
+              id="secondsInput"
+              type="number"
+              min="0"
+              max="59"
+              step="1"
+              placeholder="e.g. 30"
+            />
           </div>
         </div>
       </section>
 
-      <!-- 2. Page Measurement -->
-      <section class="card">
-        <h2>2. Page Measurement <span class="heading-pill">Choose one setup</span></h2>
-        <p class="hint">
-          Option A: upload <strong>1 sample page</strong> + total pages read. <br />
-          Option B: upload <strong>every page</strong> you read. <br />
-          Option C: no images &mdash; enter pages manually (we estimate using 300 words/page).
-        </p>
-
-        <div class="field-row" style="margin-top: 12px;">
-          <div class="field">
-            <label for="fileInput">Upload Page Images</label>
-            <input id="fileInput" type="file" accept="image/*" multiple />
-            <p class="hint">Clear, well-lit photos of the page work best.</p>
-          </div>
+      <!-- 2. Page measurement -->
+      <section class="section">
+        <div class="section-header">
+          <span class="section-title">2. Page Measurement</span>
+          <span class="tag">Choose one setup</span>
         </div>
 
-        <div class="field-row" style="margin-top: 10px;">
-          <div class="field">
-            <label for="totalPagesInput">Total pages read (if exactly 1 sample page)</label>
-            <input id="totalPagesInput" type="number" min="0" step="1" placeholder="e.g. 5" />
-            <p class="hint">
-              Example: upload one clear sample page, enter <strong>5</strong> here if you read 5 similar pages.
-            </p>
-          </div>
+        <small class="hint">
+          Option A: upload <strong>1 sample page</strong> and enter total pages
+          read.<br />
+          Option B: upload <strong>every page</strong> you read.<br />
+          Option C: no images – enter pages manually (we estimate using
+          300&nbsp;words/page).
+        </small>
+
+        <div class="field" style="margin-top: 10px">
+          <label for="fileInput">Upload page images (JPG/PNG)</label>
+          <input id="fileInput" type="file" accept="image/*" multiple />
+          <small class="hint">Clear, well-lit photos work best.</small>
         </div>
 
-        <div class="field-row" style="margin-top: 10px;">
-          <div class="field">
-            <label for="manualPagesInput">Manual page count (if no images)</label>
-            <input id="manualPagesInput" type="number" min="0" step="1" placeholder="e.g. 10" />
-            <p class="hint">
-              If you don't upload images, we estimate using <strong>300 words per page</strong>.
-            </p>
-          </div>
+        <div class="field" style="margin-top: 12px">
+          <label for="totalPagesInput">Total pages read (if exactly 1 sample)</label>
+          <input
+            id="totalPagesInput"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="e.g. 5"
+          />
+          <small class="hint">
+            Example: upload one clear sample page, enter 5 here if you read 5
+            similar pages.
+          </small>
+        </div>
+
+        <div class="field" style="margin-top: 12px">
+          <label for="manualPagesInput">Manual page count (if no images)</label>
+          <input
+            id="manualPagesInput"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="e.g. 10"
+          />
+          <small class="hint">
+            If you don’t upload images, we estimate using
+            <strong>300&nbsp;words per page</strong>.
+          </small>
         </div>
       </section>
 
-      <!-- Buttons & status -->
-      <div class="buttons-row">
-        <button class="primary" type="submit" id="calculateButton">
-          Calculate Reading Speed
-        </button>
-        <button class="secondary" type="button" id="resetButton">
+      <div class="button-row">
+        <button id="calculateBtn" class="btn-primary">Calculate Reading Speed</button>
+        <button id="resetBtn" class="btn-secondary">
           New Calculation (Full Reset)
         </button>
       </div>
 
       <div id="statusLine" class="status-line"></div>
-      <div id="messageBox" class="message hidden"></div>
+      <div id="messageBox" class="message" style="display: none"></div>
 
-      <!-- Results -->
-      <section id="resultsSection" class="results hidden" aria-live="polite">
-        <div class="results-header">
-          <h3>Results</h3>
-          <span class="badge good">
-            <span>Live</span>
-          </span>
-        </div>
-
-        <div class="result-grid">
-          <div class="stat">
-            <div class="stat-label">Total Words Read</div>
-            <div class="stat-value" id="totalWordsValue">0</div>
+      <section id="resultsContainer" class="results">
+        <div class="results-grid">
+          <div class="result-item">
+            <div class="result-label">Total words read</div>
+            <div id="totalWordsSpan" class="result-value">0</div>
           </div>
-          <div class="stat">
-            <div class="stat-label">Words per Minute</div>
-            <div class="stat-value" id="wpmValue">0</div>
+          <div class="result-item">
+            <div class="result-label">Reading speed</div>
+            <div id="wpmSpan" class="result-value">0 WPM</div>
           </div>
-          <div class="stat">
-            <div class="stat-label">Reading Level</div>
-            <div class="stat-value">
-              <span id="levelValue">–</span>
+          <div class="result-item">
+            <div class="result-label">Level</div>
+            <div id="levelSpan" class="result-value">
+              <span class="level-chip">–</span>
             </div>
           </div>
         </div>
-
-        <p id="methodUsed" class="results-note"></p>
+        <p id="methodUsed" class="method-used"></p>
       </section>
-    </form>
-  </div>
+    </main>
 
-  <!-- Help Modal -->
-  <div id="helpModal" class="modal-backdrop hidden">
-    <div class="modal">
-      <div class="modal-header">
-        <h3>How this tool works</h3>
-        <button class="modal-close" type="button" id="helpCloseBtn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p><strong>Inputs</strong></p>
-        <ul>
-          <li><strong>Time:</strong> Minutes and seconds you spent reading.</li>
-          <li>
-            <strong>Images:</strong> Upload either one sample page (plus total pages),
-            or every page you read.
-          </li>
-          <li>
-            <strong>Manual pages:</strong> If you don't use images, we estimate with
-            300 words per page.
-          </li>
-        </ul>
-        <p><strong>Output</strong></p>
-        <ul>
-          <li>Total words read in your session.</li>
-          <li>Words per minute (WPM).</li>
-          <li>A reading speed category (Beginner → Master).</li>
-        </ul>
-        <p>
-          Each calculation is fresh. Images are sent to Gemini through a Netlify
-          function using your API key on the server; nothing is stored between runs.
-        </p>
-      </div>
-    </div>
-  </div>
+    <script>
+      const minutesInput = document.getElementById("minutesInput");
+      const secondsInput = document.getElementById("secondsInput");
+      const fileInput = document.getElementById("fileInput");
+      const totalPagesInput = document.getElementById("totalPagesInput");
+      const manualPagesInput = document.getElementById("manualPagesInput");
+      const calculateBtn = document.getElementById("calculateBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const statusLine = document.getElementById("statusLine");
+      const messageBox = document.getElementById("messageBox");
+      const resultsContainer = document.getElementById("resultsContainer");
+      const totalWordsSpan = document.getElementById("totalWordsSpan");
+      const wpmSpan = document.getElementById("wpmSpan");
+      const levelSpan = document.getElementById("levelSpan");
+      const methodUsedP = document.getElementById("methodUsed");
 
-  <script>
-    // ---------- DOM references ----------
-    const form = document.getElementById("readingForm");
-    const minutesInput = document.getElementById("minutesInput");
-    const secondsInput = document.getElementById("secondsInput");
-    const fileInput = document.getElementById("fileInput");
-    const totalPagesInput = document.getElementById("totalPagesInput");
-    const manualPagesInput = document.getElementById("manualPagesInput");
+      const DEFAULT_WPP = 300;
 
-    const calculateButton = document.getElementById("calculateButton");
-    const resetButton = document.getElementById("resetButton");
-    const statusLine = document.getElementById("statusLine");
-    const messageBox = document.getElementById("messageBox");
-
-    const resultsSection = document.getElementById("resultsSection");
-    const totalWordsValue = document.getElementById("totalWordsValue");
-    const wpmValue = document.getElementById("wpmValue");
-    const levelValue = document.getElementById("levelValue");
-    const methodUsed = document.getElementById("methodUsed");
-
-    const helpButton = document.getElementById("helpButton");
-    const helpModal = document.getElementById("helpModal");
-    const helpCloseBtn = document.getElementById("helpCloseBtn");
-
-    const GEMINI_ENDPOINT = "/.netlify/functions/gemini";
-    const DEFAULT_WPP = 300;
-
-    // ---------- Helpers ----------
-    function showMessage(text, isError = false) {
-      if (!text) {
-        messageBox.classList.add("hidden");
-        messageBox.textContent = "";
-        return;
+      function showMessage(text, isError = false) {
+        if (!text) {
+          messageBox.style.display = "none";
+          messageBox.textContent = "";
+          return;
+        }
+        messageBox.textContent = text;
+        messageBox.className = "message " + (isError ? "error" : "info");
+        messageBox.style.display = "block";
       }
-      messageBox.textContent = text;
-      messageBox.classList.remove("hidden");
-      messageBox.classList.toggle("error", isError);
-      messageBox.classList.toggle("info", !isError);
-    }
 
-    function setLoading(isLoading, label) {
-      calculateButton.disabled = isLoading;
-      resetButton.disabled = isLoading;
-      calculateButton.textContent = isLoading ? label || "Analyzing..." : "Calculate Reading Speed";
-    }
+      function setLoading(isLoading) {
+        calculateBtn.disabled = isLoading;
+        resetBtn.disabled = isLoading;
+        statusLine.textContent = isLoading
+          ? "Talking to Gemini to estimate word count…"
+          : "";
+      }
 
-    function classifyLevel(wpm) {
-      if (wpm < 150) return "Beginner";
-      if (wpm < 250) return "Intermediate";
-      if (wpm < 350) return "Advanced";
-      if (wpm < 450) return "Expert";
-      return "Master";
-    }
+      function classifyLevel(wpm) {
+        if (wpm < 150) return "Slow";
+        if (wpm < 250) return "Average";
+        if (wpm < 350) return "Fast";
+        return "Very fast";
+      }
 
-    function toBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result || "";
-          const base64 = result.toString().split(",")[1] || "";
-          resolve(base64);
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = String(reader.result || "").split(",")[1] || "";
+            resolve(base64);
+          };
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function countWordsForImage(file, index, total) {
+        const base64 = await fileToBase64(file);
+        const body = {
+          imageBase64: base64,
+          mimeType: file.type || "image/jpeg",
         };
-        reader.onerror = () => reject(reader.error || new Error("FileReader error"));
-        reader.readAsDataURL(file);
-      });
-    }
 
-    async function countWordsForImage(file, index, total) {
-      statusLine.textContent = `Analyzing page ${index + 1} of ${total} with Gemini...`;
+        const res = await fetch("/.netlify/functions/gemini", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
 
-      const imageBase64 = await toBase64(file);
+        const data = await res.json().catch(() => ({}));
 
-      const response = await fetch(GEMINI_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64 }),
-      });
-
-      const payloadText = await response.text();
-      let payload;
-      try {
-        payload = JSON.parse(payloadText);
-      } catch {
-        throw new Error("Unexpected response from Gemini: " + payloadText.slice(0, 120));
-      }
-
-      if (!response.ok) {
-        const errDetail = payload.error || payload.details || payloadText;
-        throw new Error("Gemini error: " + JSON.stringify(errDetail));
-      }
-
-      const raw = payload.raw || "";
-      const match = raw.match(/\d+/);
-      if (!match) {
-        throw new Error("Could not read a word count from Gemini response.");
-      }
-      return parseInt(match[0], 10);
-    }
-
-    function resetUI() {
-      form.reset();
-      showMessage("");
-      statusLine.textContent = "";
-      resultsSection.classList.add("hidden");
-      totalWordsValue.textContent = "0";
-      wpmValue.textContent = "0";
-      levelValue.textContent = "–";
-      methodUsed.textContent = "";
-    }
-
-    // ---------- Main submit handler ----------
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      showMessage("");
-      resultsSection.classList.add("hidden");
-
-      const minutes = Number(minutesInput.value || "0");
-      const seconds = Number(secondsInput.value || "0");
-      const totalSeconds = minutes * 60 + seconds;
-
-      if (!totalSeconds || totalSeconds <= 0) {
-        showMessage("Please enter a reading time greater than zero.", true);
-        return;
-      }
-
-      const files = Array.from(fileInput.files || []);
-      const totalPages = Number(totalPagesInput.value || "0");
-      const manualPages = Number(manualPagesInput.value || "0");
-
-      if (files.length && manualPages) {
-        showMessage("Use either images or manual pages, not both at the same time.", true);
-        return;
-      }
-
-      setLoading(true, "Analyzing with Gemini...");
-      statusLine.textContent = "";
-
-      try {
-        let totalWords = 0;
-        let methodDesc = "";
-
-        if (files.length === 1 && totalPages > 0) {
-          // Scenario A: 1 sample page + total pages
-          const sampleWords = await countWordsForImage(files[0], 0, 1);
-          totalWords = sampleWords * totalPages;
-          methodDesc = `One sample page (${sampleWords.toLocaleString()} words) × ${totalPages} pages.`;
-        } else if (files.length >= 1 && totalPages === 0) {
-          // Scenario B: multiple actual pages
-          const counts = [];
-          for (let i = 0; i < files.length; i++) {
-            const count = await countWordsForImage(files[i], i, files.length);
-            counts.push(count);
-          }
-          totalWords = counts.reduce((a, b) => a + b, 0);
-          const avg = Math.round(totalWords / counts.length);
-          methodDesc = `Calculated from ${files.length} page image(s). Average words/page ≈ ${avg}.`;
-        } else if (!files.length && manualPages > 0) {
-          // Scenario C: no images, only manual pages
-          totalWords = manualPages * DEFAULT_WPP;
-          methodDesc = `Manual pages (${manualPages}) × ${DEFAULT_WPP} words/page (standard book estimate).`;
-        } else {
-          showMessage(
-            "Please choose one setup: (1) one image + total pages, (2) multiple images, or (3) no images + manual pages.",
-            true
+        if (!res.ok) {
+          const details = data && data.details ? JSON.stringify(data.details) : "";
+          throw new Error(
+            `Gemini API error while processing image ${
+              index + 1
+            }/${total}. ${details}`
           );
-          setLoading(false);
+        }
+
+        const raw = data.rawText || "";
+        const match = String(raw).match(/\d+/);
+        if (!match) {
+          throw new Error(
+            `Could not read a number from Gemini response for image ${
+              index + 1
+            }/${total}.`
+          );
+        }
+        return parseInt(match[0], 10);
+      }
+
+      async function handleSubmit(event) {
+        event.preventDefault();
+        showMessage("");
+        resultsContainer.style.display = "none";
+
+        const minutes = parseFloat(minutesInput.value || "0");
+        const seconds = parseFloat(secondsInput.value || "0");
+        const totalMinutes = minutes + seconds / 60;
+
+        if (!totalMinutes || totalMinutes <= 0) {
+          showMessage("Please enter how long you read for.", true);
           return;
         }
 
-        const wpm = totalWords / (totalSeconds / 60);
-        const level = classifyLevel(wpm);
+        const files = Array.from(fileInput.files || []);
+        const totalPages = parseInt(totalPagesInput.value || "0", 10) || 0;
+        const manualPages = parseInt(manualPagesInput.value || "0", 10) || 0;
 
-        totalWordsValue.textContent = Math.round(totalWords).toLocaleString();
-        wpmValue.textContent = Math.round(wpm).toLocaleString();
-        levelValue.textContent = level;
-        methodUsed.textContent = methodDesc;
+        if (files.length === 0 && totalPages === 0 && manualPages === 0) {
+          showMessage(
+            "Please either upload page image(s) or enter a manual page count.",
+            true
+          );
+          return;
+        }
 
-        resultsSection.classList.remove("hidden");
-        statusLine.textContent = "Done.";
-      } catch (err) {
-        console.error(err);
-        showMessage(err.message || "Something went wrong while contacting Gemini.", true);
+        let totalWords = 0;
+        let methodDescription = "";
+
+        try {
+          setLoading(true);
+
+          if (files.length === 1 && totalPages > 0) {
+            // Scenario A: 1 sample page + total pages
+            const sampleCount = await countWordsForImage(files[0], 0, 1);
+            totalWords = sampleCount * totalPages;
+            methodDescription = `Estimated using 1 sample page (${sampleCount.toLocaleString()} words) × ${totalPages} total pages.`;
+          } else if (files.length >= 1 && totalPages === 0) {
+            // Scenario B: multiple actual pages
+            const wordCounts = [];
+            for (let i = 0; i < files.length; i++) {
+              const count = await countWordsForImage(files[i], i, files.length);
+              wordCounts.push(count);
+            }
+            totalWords = wordCounts.reduce((a, b) => a + b, 0);
+            const avg = Math.round(totalWords / wordCounts.length);
+            methodDescription = `Calculated directly from ${files.length} page image(s). Average words per page: ${avg.toLocaleString()}.`;
+          } else if (files.length === 0 && manualPages > 0) {
+            // Scenario C: manual count only
+            totalWords = manualPages * DEFAULT_WPP;
+            methodDescription = `Used manual page count (${manualPages}) × ${DEFAULT_WPP} words per page (standard book average).`;
+          } else {
+            showMessage(
+              "Combination of options is unclear. Either:\n• 1 image + total pages\n• multiple images (no total pages)\n• no images + manual pages.",
+              true
+            );
+            return;
+          }
+
+          const wpm = totalWords / totalMinutes;
+          const level = classifyLevel(wpm);
+
+          totalWordsSpan.textContent = Math.round(totalWords).toLocaleString();
+          wpmSpan.textContent = `${Math.round(wpm).toLocaleString()} WPM`;
+          levelSpan.innerHTML = `<span class="level-chip">${level}</span>`;
+          methodUsedP.textContent = methodDescription;
+          resultsContainer.style.display = "block";
+          statusLine.textContent = "Done.";
+        } catch (err) {
+          console.error(err);
+          showMessage(err.message || "Something went wrong while contacting Gemini.", true);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function fullReset() {
+        minutesInput.value = "";
+        secondsInput.value = "";
+        fileInput.value = "";
+        totalPagesInput.value = "";
+        manualPagesInput.value = "";
+        showMessage("");
+        resultsContainer.style.display = "none";
         statusLine.textContent = "";
-      } finally {
-        setLoading(false);
+        totalWordsSpan.textContent = "0";
+        wpmSpan.textContent = "0 WPM";
+        levelSpan.innerHTML = '<span class="level-chip">–</span>';
+        methodUsedP.textContent = "";
       }
-    });
 
-    // ---------- Reset ----------
-    resetButton.addEventListener("click", () => {
-      resetUI();
-    });
-
-    // ---------- Help modal ----------
-    helpButton.addEventListener("click", () => {
-      helpModal.classList.remove("hidden");
-    });
-
-    helpCloseBtn.addEventListener("click", () => {
-      helpModal.classList.add("hidden");
-    });
-
-    helpModal.addEventListener("click", (e) => {
-      if (e.target === helpModal) {
-        helpModal.classList.add("hidden");
-      }
-    });
-  </script>
-</body>
+      calculateBtn.addEventListener("click", handleSubmit);
+      resetBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        fullReset();
+      });
+    </script>
+  </body>
 </html>
