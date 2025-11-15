@@ -30,7 +30,7 @@ exports.handler = async function (event) {
     }
 
     const url =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" +
+  "https://generativelanguage.googleapis.com/v1/models/gemini-pro-vision:generateContent?key=" +
   apiKey;
 
     const payload = {
