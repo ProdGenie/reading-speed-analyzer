@@ -31,8 +31,10 @@ exports.handler = async function (event) {
     }
 
     // NOTE: use a concrete model name that exists for v1beta
+    
     const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent";
+
 
     const response = await fetch(url, {
       method: "POST",
