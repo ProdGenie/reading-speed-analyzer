@@ -192,6 +192,8 @@
     const helpBtn = document.getElementById("help-btn");
     const helpModal = document.getElementById("help-modal");
     const helpClose = document.getElementById("help-close");
+    const resetBtn = document.getElementById("reset-btn");
+
 
     function showMessage(text, isError = false) {
       messageBox.classList.remove("hidden");
@@ -383,8 +385,21 @@
       if (e.target === helpModal) helpModal.classList.add("hidden");
     });
 
+        function fullReset() {
+      form.reset();                    // clears inputs
+      clearMessage();                  // hides message box
+      resultsContainer.classList.add("hidden");
+      statusLine.textContent = "";
+      totalWordsSpan.textContent = "0";
+      wpmSpan.textContent = "0";
+      levelSpan.textContent = "–";
+    }
+
+    resetBtn.addEventListener("click", fullReset);
+
     form.addEventListener("submit", handleSubmit);
   </script>
 </body>
 </html>
+
 
