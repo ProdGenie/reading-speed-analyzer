@@ -1,34 +1,102 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// netlify/functions/gemini.js
+// Serverless function that calls Gemini via REST API (no external packages needed)
 
-export async function handler(event) {
+exports.handler = async function (event) {
+  // Only allow POST
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
+
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const body = JSON.parse(event.body || "{}");
+    const imageBase64 = body.imageBase64;
 
-    const body = JSON.parse(event.body);
+    if (!imageBase64) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Missing 'imageBase64' in request body" }),
+      };
+    }
 
-    // Convert base64 image into part for Gemini
-    const imagePart = {
-      inlineData: {
-        data: body.imageBase64,
-        mimeType: "image/jpeg",
-      },
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "GEMINI_API_KEY is not set on the server" }),
+      };
+    }
+
+    // Use the REST endpoint for Gemini
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" +
+      apiKey;
+
+    const prompt =
+      "Count the NUMBER OF WORDS in this page image. Return ONLY the number, with no extra words.";
+
+    const payload = {
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: imageBase64,
+              },
+            },
+          ],
+        },
+      ],
     };
 
-    const prompt = "Count the NUMBER OF WORDS in this page. Return ONLY the number.";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-    const result = await model.generateContent([prompt, imagePart]);
-    const text = result.response.text();
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        statusCode: response.status,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          error: "Gemini API error",
+          details: errorText,
+        }),
+      };
+    }
+
+    const data = await response.json();
+
+    // Try to collect all text parts into a single string
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const raw =
+      parts
+        .map((p) => p.text || "")
+        .join(" ")
+        .trim() || "";
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ raw: text }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ raw }),
     };
-
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        error: "Internal error",
+        details: err.message || String(err),
+      }),
     };
   }
-}
+};
