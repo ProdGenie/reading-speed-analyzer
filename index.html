@@ -2,267 +2,217 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reading Speed Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: "Inter", sans-serif;
-      background-color: #111827;
-      color: #f9fafb;
-      padding: 1rem;
-    }
-    .card {
-      background-color: #1f2937;
-      border-radius: 1rem;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2),
-                  0 4px 6px -2px rgba(0, 0, 0, 0.1);
-    }
-    input[type="number"],
-    input[type="text"],
-    input[type="file"] {
-      background-color: #374151;
-      border: 1px solid #4b5563;
-      color: #f9fafb;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      width: 100%;
-      transition: border-color 0.3s;
-    }
-    input[type="number"]:focus,
-    input[type="text"]:focus {
-      outline: none;
-      border-color: #6366f1;
-    }
-    button {
-      background-color: #6366f1;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #4f46e5;
-    }
+    body { background:#020617; color:#e5e7eb; }
   </style>
 </head>
-
-<body class="min-h-screen flex items-center justify-center">
-  <div class="w-full max-w-lg">
-    <h1 class="text-3xl font-bold text-center mb-6">Reading Speed Analyzer</h1>
-
-    <div class="card p-6 md:p-8">
-      <div class="bg-yellow-800 text-yellow-100 p-4 rounded-lg mb-4 text-sm">
-        Uses your Gemini API key to count words in uploaded page images.
-        Images are compressed for speed; multiple pages are analyzed in a single API call.
-      </div>
-
-      <!-- NEW: How it works button + panel -->
-      <div class="mb-4">
-        <button type="button"
-                id="how-toggle"
-                class="text-sm px-3 py-1 rounded-md bg-slate-700 hover:bg-slate-600">
-          How this tool works
-        </button>
-        <div id="how-panel" class="mt-3 p-3 rounded-lg bg-slate-800 text-xs leading-relaxed hidden">
-          <p class="font-semibold mb-1">Quick guide:</p>
-          <ul class="list-disc list-inside space-y-1">
-            <li><span class="font-semibold">1. Time (mandatory):</span> enter how long you read (minutes and/or seconds).</li>
-            <li><span class="font-semibold">2. Pages:</span> either
-              <ul class="list-disc list-inside ml-4">
-                <li><span class="font-semibold">Upload 1 page</span> and fill “Total pages read” if it’s a sample, or</li>
-                <li><span class="font-semibold">Upload several pages</span> (tool counts each), or</li>
-                <li><span class="font-semibold">No images:</span> enter “Manual page count” (uses 300 words/page).</li>
-              </ul>
-            </li>
-            <li><span class="font-semibold">3. Click “Calculate Reading Speed”</span> to see total words, WPM, and your reading level.</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Form -->
-      <form id="wpm-form">
-        <h2 class="text-xl font-semibold mb-4 text-indigo-400">1. Reading Time</h2>
-        <div class="flex space-x-4 mb-6">
-          <div class="flex-1">
-            <label for="time-minutes" class="block text-sm mb-1">Minutes (M)</label>
-            <input type="number" id="time-minutes" min="0" required />
-          </div>
-          <div class="flex-1">
-            <label for="time-seconds" class="block text-sm mb-1">Seconds (S)</label>
-            <input type="number" id="time-seconds" min="0" max="59" required />
-          </div>
-        </div>
-
-        <h2 class="text-xl font-semibold mb-4 text-indigo-400">2. Page Measurement</h2>
-
-        <div class="mb-4">
-          <label for="page-images" class="block text-sm mb-1">
-            Upload Page Images (1 = sample, or multiple)
-          </label>
-          <input type="file" id="page-images" accept="image/*" multiple />
-        </div>
-
-        <div id="similar-pages-container" class="mb-4" style="display:none;">
-          <label for="similar-pages" class="block text-sm mb-1">
-            Total Pages Read (if exactly 1 sample page)
-          </label>
-          <input type="number" id="similar-pages" min="1" />
-        </div>
-
-        <div class="mb-4">
-          <label for="manual-pages" class="block text-sm mb-1">
-            Manual Page Count (if no images)
-          </label>
-          <input type="number" id="manual-pages" min="1" />
-        </div>
-
-        <button type="submit" class="w-full mt-4">Calculate Reading Speed</button>
-      </form>
-
-      <!-- Messages -->
-      <div id="message-box" class="mt-4 p-4 rounded-lg text-center hidden"></div>
-
-      <!-- Results -->
-      <div id="results-container" class="mt-8 pt-6 border-t border-gray-700 hidden">
-        <h2 class="text-2xl font-bold mb-4 text-center text-green-400">Results</h2>
-
-        <p class="flex justify-between text-lg">
-          <span class="font-semibold">Total Words Read:</span>
-          <span id="total-words" class="text-green-300 font-mono">0</span>
-        </p>
-
-        <p class="flex justify-between text-lg">
-          <span class="font-semibold">Words Per Minute (WPM):</span>
-          <span id="wpm-result" class="text-3xl font-extrabold text-green-400">0</span>
-        </p>
-
-        <!-- Reading Level + help icon -->
-        <p class="flex justify-between text-lg mt-2 items-center">
-          <span class="font-semibold flex items-center">
-            Reading Level
-            <button type="button"
-                    id="help-toggle"
-                    class="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-slate-600 text-xs font-bold">
-              i
-            </button>
-          </span>
-          <span id="reading-level" class="text-indigo-300 font-semibold">–</span>
-        </p>
-
-        <p id="method-used" class="text-gray-400 text-sm italic mt-4"></p>
-
-        <!-- Reading level help panel -->
-        <div id="help-panel" class="mt-4 p-3 rounded-lg bg-slate-800 text-sm hidden">
-          <p class="font-semibold mb-1">How reading levels are defined (assuming good comprehension):</p>
-          <ul class="list-disc list-inside space-y-1">
-            <li><span class="font-semibold">Beginner (0–149 WPM)</span> – building basic reading fluency.</li>
-            <li><span class="font-semibold">Intermediate (150–249 WPM)</span> – around typical adult reading speed.</li>
-            <li><span class="font-semibold">Advanced (250–349 WPM)</span> – faster than average, efficient reader.</li>
-            <li><span class="font-semibold">Expert (350–499 WPM)</span> – significantly above average, strong focus.</li>
-            <li><span class="font-semibold">Master (500+ WPM)</span> – very rare; trained speed-reader territory.</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Full reset -->
-      <button onclick="location.reload()"
-              class="w-full mt-4 bg-red-600 hover:bg-red-500">
-        New Calculation (Full Reset)
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-3xl bg-slate-900/80 rounded-2xl shadow-2xl border border-slate-700 p-6 md:p-8">
+    <header class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl md:text-3xl font-extrabold text-white">
+        Reading Speed Analyzer
+      </h1>
+      <!-- Help icon -->
+      <button id="help-btn"
+              class="w-8 h-8 flex items-center justify-center rounded-full border border-slate-500 text-slate-200 text-sm hover:bg-slate-700"
+              title="How this works">
+        i
       </button>
+    </header>
+
+    <!-- Info bar -->
+    <div class="mb-6 text-sm bg-amber-900/60 border border-amber-500/70 text-amber-100 px-4 py-3 rounded-lg">
+      Uses your Gemini API key (kept on the server) to count words in uploaded page
+      images. Each run is fresh – nothing is stored between calculations.
+    </div>
+
+    <!-- Form -->
+    <form id="wpm-form" class="space-y-6">
+      <!-- 1. Time -->
+      <section>
+        <h2 class="text-lg md:text-xl font-semibold text-indigo-300 mb-3">
+          1. Reading Time
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="time-minutes" class="block text-sm mb-1">Minutes (M)</label>
+            <input id="time-minutes" type="number" min="0" required
+                   class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 focus:outline-none focus:ring focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label for="time-seconds" class="block text-sm mb-1">Seconds (S)</label>
+            <input id="time-seconds" type="number" min="0" max="59" required
+                   class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 focus:outline-none focus:ring focus:ring-indigo-500" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Pages -->
+      <section>
+        <h2 class="text-lg md:text-xl font-semibold text-indigo-300 mb-3">
+          2. Page Measurement
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm mb-1">
+              Upload Page Images (1 = sample, multiple = each page)
+            </label>
+            <input id="page-images" type="file" accept="image/*" multiple
+                   class="w-full text-sm text-slate-200 file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0 file:text-sm
+                          file:font-semibold file:bg-indigo-600 file:text-white
+                          hover:file:bg-indigo-500" />
+          </div>
+          <div>
+            <label for="manual-pages" class="block text-sm mb-1">
+              Manual Page Count (if no images)
+            </label>
+            <input id="manual-pages" type="number" min="1"
+                   placeholder="e.g. 10"
+                   class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 focus:outline-none focus:ring focus:ring-indigo-500" />
+            <p class="mt-1 text-xs text-slate-400">
+              If you don't upload images, we estimate using 300 words per page.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Button & status -->
+      <div class="pt-2">
+        <button id="submit-btn"
+                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 font-semibold text-white transition disabled:opacity-60 disabled:cursor-not-allowed">
+          <span id="submit-text">Calculate Reading Speed</span>
+          <span id="spinner" class="hidden animate-spin border-2 border-white/60 border-t-transparent rounded-full w-4 h-4"></span>
+        </button>
+      </div>
+
+      <p id="status-line" class="text-xs text-slate-400 mt-1"></p>
+    </form>
+
+    <!-- Message -->
+    <div id="message-box" class="mt-4 p-3 rounded-lg text-sm text-center hidden"></div>
+
+    <!-- Results -->
+    <section id="results-container"
+             class="mt-6 pt-5 border-t border-slate-700 hidden">
+      <h2 class="text-xl font-bold text-emerald-400 mb-4 text-center">
+        Results
+      </h2>
+      <div class="space-y-2 text-sm md:text-base">
+        <p class="flex justify-between">
+          <span class="font-semibold">Total Words Read:</span>
+          <span id="total-words" class="font-mono text-emerald-300">0</span>
+        </p>
+        <p class="flex justify-between text-lg md:text-2xl">
+          <span class="font-semibold">Words Per Minute (WPM):</span>
+          <span id="wpm-result" class="font-extrabold text-emerald-400">0</span>
+        </p>
+        <p class="flex justify-between">
+          <span class="font-semibold">Reading Level:</span>
+          <span id="reading-level" class="font-semibold text-indigo-300">
+            –
+          </span>
+        </p>
+        <p id="method-used" class="mt-3 text-xs text-slate-400 italic"></p>
+      </div>
+    </section>
+
+    <!-- Help modal -->
+    <div id="help-modal"
+         class="fixed inset-0 bg-black/60 flex items-center justify-center z-40 hidden">
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-5 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold mb-3">How this tool works</h3>
+        <ul class="text-sm space-y-2 text-slate-200">
+          <li>• Enter how long you read (minutes + seconds).</li>
+          <li>• Upload 1–5 clear photos of book pages.
+              The app asks Gemini to count the words on each page.</li>
+          <li>• If you skip images, it assumes <b>300 words per page</b>.</li>
+          <li>• WPM categories:
+            <br />Beginner: &lt; 200 &nbsp;|&nbsp;
+            Intermediate: 200–300 &nbsp;|&nbsp;
+            Advanced: 300–450 &nbsp;|&nbsp;
+            Expert: 450–600 &nbsp;|&nbsp;
+            Master: &gt; 600
+          </li>
+        </ul>
+        <button id="help-close"
+                class="mt-4 w-full rounded-lg bg-slate-700 hover:bg-slate-600 py-2 text-sm font-semibold">
+          Close
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
-    // -------- CONFIG --------
-    const API_KEY = "AIzaSyC-6MqcEjHyWwx7PKSqnWAfqiqwgMH9vJA"; // <--- put your real key here
-
-    const API_URL =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent";
-
+    const FUNCTION_URL = "/.netlify/functions/gemini-wordcount";
     const DEFAULT_WPP = 300;
-    const MAX_IMG_WIDTH = 600;
-    const JPEG_QUALITY = 0.7;
-    const API_TIMEOUT_MS = 90000; // 90 seconds for batches
 
-    // -------- DOM ELEMENTS --------
     const form = document.getElementById("wpm-form");
     const fileInput = document.getElementById("page-images");
-    const similarPagesContainer = document.getElementById("similar-pages-container");
-    const similarPagesInput = document.getElementById("similar-pages");
     const manualPagesInput = document.getElementById("manual-pages");
-    const resultsContainer = document.getElementById("results-container");
     const messageBox = document.getElementById("message-box");
-    const readingLevelSpan = document.getElementById("reading-level");
-    const helpToggle = document.getElementById("help-toggle");
-    const helpPanel = document.getElementById("help-panel");
-    const howToggle = document.getElementById("how-toggle");
-    const howPanel = document.getElementById("how-panel");
+    const resultsContainer = document.getElementById("results-container");
+    const totalWordsSpan = document.getElementById("total-words");
+    const wpmSpan = document.getElementById("wpm-result");
+    const levelSpan = document.getElementById("reading-level");
+    const methodUsedP = document.getElementById("method-used");
+    const statusLine = document.getElementById("status-line");
+    const submitBtn = document.getElementById("submit-btn");
+    const submitText = document.getElementById("submit-text");
+    const spinner = document.getElementById("spinner");
 
-    // -------- SOFT RESET --------
-    function resetState() {
-      resultsContainer.classList.add("hidden");
-      document.getElementById("total-words").textContent = "0";
-      document.getElementById("wpm-result").textContent = "0";
-      document.getElementById("method-used").textContent = "";
-      readingLevelSpan.textContent = "–";
-      hideMessage();
-      helpPanel.classList.add("hidden");
-      performance.clearResourceTimings?.();
-    }
+    const helpBtn = document.getElementById("help-btn");
+    const helpModal = document.getElementById("help-modal");
+    const helpClose = document.getElementById("help-close");
 
-    function displayMessage(text, isError = false) {
+    function showMessage(text, isError = false) {
+      messageBox.classList.remove("hidden");
       messageBox.textContent = text;
       messageBox.className =
-        "mt-4 p-4 rounded-lg text-center " +
-        (isError ? "bg-red-900 text-red-300" : "bg-blue-900 text-blue-300");
-      messageBox.style.display = "block";
+        "mt-4 p-3 rounded-lg text-sm text-center " +
+        (isError
+          ? "bg-red-900/70 border border-red-500 text-red-100"
+          : "bg-blue-900/60 border border-blue-500 text-blue-100");
     }
 
-    function hideMessage() {
-      messageBox.style.display = "none";
+    function clearMessage() {
+      messageBox.classList.add("hidden");
       messageBox.textContent = "";
     }
 
-    // -------- IMAGE COMPRESSION --------
-    function compressImageToBase64(file) {
+    function setLoading(isLoading, label) {
+      if (isLoading) {
+        submitBtn.disabled = true;
+        submitText.textContent = label || "Calculating...";
+        spinner.classList.remove("hidden");
+      } else {
+        submitBtn.disabled = false;
+        submitText.textContent = "Calculate Reading Speed";
+        spinner.classList.add("hidden");
+      }
+    }
+
+    function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        const img = new Image();
-
-        reader.onload = (e) => (img.src = e.target.result);
-        reader.onerror = reject;
-        img.onerror = reject;
-
-        img.onload = () => {
-          let { width, height } = img;
-          if (width > MAX_IMG_WIDTH) {
-            const ratio = MAX_IMG_WIDTH / width;
-            width = MAX_IMG_WIDTH;
-            height = height * ratio;
-          }
-
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-
-          const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
-          const base64 = dataUrl.split(",")[1];
+        reader.onload = () => {
+          const result = reader.result;
+          // result is like "data:image/jpeg;base64,AAAA..."
+          const base64 = result.split(",")[1];
           resolve(base64);
         };
-
+        reader.onerror = reject;
         reader.readAsDataURL(file);
       });
     }
 
-    // -------- SINGLE-IMAGE WORD COUNT --------
-    async function getWordCountFromGemini(file) {
-      if (!API_KEY) throw new Error("API key is missing.");
-      const base64Data = await compressImageToBase64(file);
+    async function countWordsForImage(file, index, totalFiles) {
+      statusLine.textContent = `Analyzing page ${index + 1} of ${totalFiles}...`;
+
+      const base64 = await fileToBase64(file);
 
       const payload = {
         contents: [
@@ -270,261 +220,134 @@
             parts: [
               {
                 text:
-                  "You are a precise word-counting tool. Count ALL visible words in this single book page image " +
-                  "(including headings and footers). Return ONLY a single integer with no words or explanation. " +
-                  "Example response: 427"
+                  "You are a precise word counter. " +
+                  "Look at this page image and count ONLY the number of words that a human could read. " +
+                  "Return just one integer number, no extra words."
               },
               {
-                inline_data: {
-                  mime_type: "image/jpeg",
-                  data: base64Data
+                inlineData: {
+                  mimeType: file.type || "image/jpeg",
+                  data: base64
                 }
               }
             ]
           }
-        ]
+        ],
+        generationConfig: {
+          temperature: 0,
+          maxOutputTokens: 16
+        }
       };
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s
 
       let response;
       try {
-        response = await fetch(API_URL, {
+        response = await fetch(FUNCTION_URL, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": API_KEY
-          },
-          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payload }),
           signal: controller.signal
         });
-      } catch (err) {
+      } finally {
         clearTimeout(timeoutId);
-        if (err.name === "AbortError") {
-          throw new Error("Gemini request timed out. Try again or use a smaller image.");
-        }
-        throw err;
       }
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
+        const text = await response.text().catch(() => "");
+        throw new Error(`Gemini error (${response.status}): ${text}`);
       }
 
-      const result = await response.json();
-      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-      console.log("Gemini single-page output:", text);
-
-      const match = text.match(/(\d+)/);
-      if (!match) throw new Error("Could not parse word count from Gemini response: " + text);
-      return parseInt(match[1], 10);
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const match = text.match(/\d+/);
+      if (!match) {
+        throw new Error("Could not read a word count from Gemini response.");
+      }
+      return parseInt(match[0], 10);
     }
 
-    // -------- MULTI-IMAGE WORD COUNTS (BATCHED) --------
-    async function getWordCountsForMultipleImages(filesArr) {
-      if (!API_KEY) throw new Error("API key is missing.");
-
-      const base64Images = await Promise.all(filesArr.map(compressImageToBase64));
-
-      const parts = [
-        {
-          text:
-            `You will receive ${base64Images.length} separate page images. ` +
-            "For EACH image, count ALL visible words on that page. " +
-            "Return ONLY a JSON array of integers in the same order as the images, e.g. [421, 389, 402]. " +
-            "No extra text, no explanation."
-        },
-        ...base64Images.map(b64 => ({
-          inline_data: {
-            mime_type: "image/jpeg",
-            data: b64
-          }
-        }))
-      ];
-
-      const payload = {
-        contents: [{ parts }]
-      };
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
-
-      let response;
-      try {
-        response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": API_KEY
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        });
-      } catch (err) {
-        clearTimeout(timeoutId);
-        if (err.name === "AbortError") {
-          throw new Error("Gemini request timed out. Try again with fewer or smaller images.");
-        }
-        throw err;
-      }
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-
-      const result = await response.json();
-      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-      console.log("Gemini multi-page output:", text);
-
-      let counts = [];
-      try {
-        counts = JSON.parse(text);
-        if (!Array.isArray(counts)) throw new Error();
-      } catch {
-        const matches = text.match(/\d+/g) || [];
-        counts = matches.map(n => parseInt(n, 10));
-      }
-
-      if (!counts.length) {
-        throw new Error("Could not parse word counts from Gemini response: " + text);
-      }
-      return counts;
-    }
-
-    // -------- READING LEVEL CLASSIFICATION --------
-    function classifyWPM(wpm) {
-      if (wpm < 150) return "Beginner";
-      if (wpm < 250) return "Intermediate";
-      if (wpm < 350) return "Advanced";
-      if (wpm < 500) return "Expert";
+    function classifyLevel(wpm) {
+      if (wpm < 200) return "Beginner";
+      if (wpm < 300) return "Intermediate";
+      if (wpm < 450) return "Advanced";
+      if (wpm < 600) return "Expert";
       return "Master";
     }
 
-    // -------- INPUT BEHAVIOUR --------
-    fileInput.addEventListener("change", () => {
-      const files = fileInput.files;
-      if (files.length === 1) {
-        similarPagesContainer.style.display = "block";
-      } else {
-        similarPagesContainer.style.display = "none";
-        similarPagesInput.value = "";
-      }
-
-      if (files.length > 0) {
-        manualPagesInput.value = "";
-        manualPagesInput.disabled = true;
-        manualPagesInput.classList.add("opacity-50");
-      } else {
-        manualPagesInput.disabled = false;
-        manualPagesInput.classList.remove("opacity-50");
-      }
-    });
-
-    manualPagesInput.addEventListener("input", () => {
-      if (manualPagesInput.value) {
-        fileInput.value = "";
-        fileInput.disabled = true;
-        fileInput.classList.add("opacity-50");
-        similarPagesContainer.style.display = "none";
-        similarPagesInput.value = "";
-      } else {
-        fileInput.disabled = false;
-        fileInput.classList.remove("opacity-50");
-      }
-    });
-
-    // -------- HELP TOGGLES --------
-    helpToggle.addEventListener("click", () => {
-      helpPanel.classList.toggle("hidden");
-    });
-
-    howToggle.addEventListener("click", () => {
-      howPanel.classList.toggle("hidden");
-    });
-
-    // -------- MAIN CALCULATION --------
-    form.addEventListener("submit", async (event) => {
+    async function handleSubmit(event) {
       event.preventDefault();
-      resetState();
+      clearMessage();
+      resultsContainer.classList.add("hidden");
+      statusLine.textContent = "";
 
       const minutes = parseInt(document.getElementById("time-minutes").value) || 0;
       const seconds = parseInt(document.getElementById("time-seconds").value) || 0;
-      const similarPages = parseInt(similarPagesInput.value) || 0;
-      const manualPages = parseInt(manualPagesInput.value) || 0;
       const files = fileInput.files;
+      const manualPages = parseInt(manualPagesInput.value) || 0;
 
       if (minutes === 0 && seconds === 0) {
-        return displayMessage("Please enter the total reading time.", true);
+        showMessage("Please enter the total reading time.", true);
+        return;
       }
-      if (seconds >= 60) {
-        return displayMessage("Seconds must be less than 60.", true);
+
+      if (files.length === 0 && manualPages <= 0) {
+        showMessage("Upload at least one page image or enter a manual page count.", true);
+        return;
       }
 
       const totalMinutes = minutes + seconds / 60;
       let totalWords = 0;
-      let calculationMethod = "";
-
-      const submitButton = form.querySelector('button[type="submit"]');
-      submitButton.disabled = true;
-      submitButton.textContent = "Calculating…";
+      let methodDescription = "";
 
       try {
+        setLoading(true, "Analyzing pages...");
+
         if (files.length > 0) {
-          const filesArr = Array.from(files);
-
-          if (filesArr.length === 1 && similarPages > 0) {
-            displayMessage("Analyzing sample page with Gemini…");
-            const sampleWordCount = await getWordCountFromGemini(filesArr[0]);
-            totalWords = sampleWordCount * similarPages;
-            calculationMethod =
-              `1 sample page (≈${sampleWordCount} words) × ${similarPages} pages.`;
-          } else if (filesArr.length === 1) {
-            displayMessage("Analyzing 1 page with Gemini…");
-            const count = await getWordCountFromGemini(filesArr[0]);
-            totalWords = count;
-            calculationMethod = "Analyzed 1 uploaded page.";
-          } else {
-            displayMessage(`Analyzing ${filesArr.length} pages in a single Gemini call…`);
-            const counts = await getWordCountsForMultipleImages(filesArr);
-            totalWords = counts.reduce((sum, c) => sum + c, 0);
-            const avgWPP = Math.round(totalWords / counts.length);
-            calculationMethod =
-              `Analyzed ${counts.length} pages in one request. Average WPP ≈ ${avgWPP}.`;
+          const wordCounts = [];
+          for (let i = 0; i < files.length; i++) {
+            const count = await countWordsForImage(files[i], i, files.length);
+            wordCounts.push(count);
           }
-
-        } else if (manualPages > 0) {
-          totalWords = manualPages * DEFAULT_WPP;
-          calculationMethod =
-            `Manual mode: ${manualPages} pages × ${DEFAULT_WPP} words/page.`;
+          totalWords = wordCounts.reduce((a, b) => a + b, 0);
+          const avg = Math.round(totalWords / wordCounts.length);
+          methodDescription = `Calculated directly from ${files.length} page image(s). Average words per page: ${avg}.`;
         } else {
-          return displayMessage("Upload a page or enter manual pages.", true);
+          totalWords = manualPages * DEFAULT_WPP;
+          methodDescription = `Used manual page count (${manualPages}) × ${DEFAULT_WPP} words per page (standard book average).`;
         }
 
         const wpm = totalWords / totalMinutes;
-        const roundedWpm = Math.round(wpm);
+        const level = classifyLevel(wpm);
 
-        document.getElementById("total-words").textContent =
-          Math.round(totalWords).toLocaleString();
-        document.getElementById("wpm-result").textContent =
-          roundedWpm.toLocaleString();
-        document.getElementById("method-used").textContent = calculationMethod;
-
-        const level = classifyWPM(roundedWpm);
-        readingLevelSpan.textContent = level;
-
-        hideMessage(); // hide "Analyzing..." when done
+        totalWordsSpan.textContent = Math.round(totalWords).toLocaleString();
+        wpmSpan.textContent = Math.round(wpm).toLocaleString();
+        levelSpan.textContent = level;
+        methodUsedP.textContent = methodDescription;
         resultsContainer.classList.remove("hidden");
+        statusLine.textContent = "Done.";
       } catch (err) {
-        displayMessage("Error: " + err.message, true);
+        console.error(err);
+        showMessage(err.message || "Something went wrong while contacting Gemini.", true);
+        statusLine.textContent = "";
       } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = "Calculate Reading Speed";
+        setLoading(false);
       }
+    }
+
+    // Help modal
+    helpBtn.addEventListener("click", () => {
+      helpModal.classList.remove("hidden");
     });
+    helpClose.addEventListener("click", () => {
+      helpModal.classList.add("hidden");
+    });
+    helpModal.addEventListener("click", (e) => {
+      if (e.target === helpModal) helpModal.classList.add("hidden");
+    });
+
+    form.addEventListener("submit", handleSubmit);
   </script>
 </body>
 </html>
