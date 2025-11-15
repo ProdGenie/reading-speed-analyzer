@@ -1,5 +1,4 @@
 // netlify/functions/gemini.js
-// Serverless function that calls Gemini via REST API (no external packages needed)
 
 exports.handler = async function (event) {
   // Only allow POST
@@ -32,13 +31,13 @@ exports.handler = async function (event) {
       };
     }
 
-    // Use the REST endpoint for Gemini
+    // ✅ Correct REST endpoint + valid model name
     const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" +
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
       apiKey;
 
     const prompt =
-      "Count the NUMBER OF WORDS in this page image. Return ONLY the number, with no extra words.";
+      "Count the NUMBER OF WORDS in this page image. Return ONLY the number, no extra text.";
 
     const payload = {
       contents: [
@@ -62,22 +61,22 @@ exports.handler = async function (event) {
       body: JSON.stringify(payload),
     });
 
+    const text = await response.text();
+
     if (!response.ok) {
-      const errorText = await response.text();
       return {
         statusCode: response.status,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           error: "Gemini API error",
-          details: errorText,
+          details: text,
         }),
       };
     }
 
-    const data = await response.json();
-
-    // Try to collect all text parts into a single string
+    const data = JSON.parse(text);
     const parts = data.candidates?.[0]?.content?.parts || [];
+
     const raw =
       parts
         .map((p) => p.text || "")
