@@ -166,7 +166,7 @@
   </div>
 
   <script>
-    const FUNCTION_URL = "/.netlify/functions/gemini-wordcount";
+    const FUNCTION_URL = "/.netlify/functions/gemini";
     const DEFAULT_WPP = 300;
 
     const form = document.getElementById("wpm-form");
@@ -230,35 +230,64 @@
       });
     }
 
-    async function countWordsForImage(file, index, totalFiles) {
-      statusLine.textContent = `Analyzing page ${index + 1} of ${totalFiles}...`;
+    
+        async function countWordsForImage(file, index, total) {
+      // Show progress
+      statusLine.textContent = `Analyzing page ${index + 1} of ${total}...`;
 
+      // 1) File -> base64
       const base64 = await fileToBase64(file);
 
-      const payload = {
-        contents: [
-          {
-            parts: [
-              {
-                text:
-                  "You are a precise word counter. " +
-                  "Look at this page image and count ONLY the number of words that a human could read. " +
-                  "Return just one integer number, no extra words."
-              },
-              {
-                inlineData: {
-                  mimeType: file.type || "image/jpeg",
-                  data: base64
-                }
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0,
-          maxOutputTokens: 16
-        }
-      };
+      // 2) Call our Netlify Gemini function
+      const res = await fetch("/.netlify/functions/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64 }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Gemini error (${res.status}): ${errText}`);
+      }
+
+      const data = await res.json();
+
+      // 3) Get the raw text returned by the server
+      let rawText = "";
+
+      if (data.raw) {
+        rawText = data.raw; // { raw: "312" } or "This page has 312 words"
+      } else if (
+        data.candidates &&
+        data.candidates[0] &&
+        data.candidates[0].content &&
+        data.candidates[0].content.parts &&
+        data.candidates[0].content.parts[0].text
+      ) {
+        // fallback if we ever pass the full Gemini response through
+        rawText = data.candidates[0].content.parts[0].text;
+      }
+
+      rawText = String(rawText).trim();
+
+      // 4) Extract the first number in the text (e.g. 312 from "312" or "312 words")
+      const numberMatch = rawText.match(/\d+/);
+
+      if (!numberMatch) {
+        console.error("Gemini raw response (no digits):", rawText);
+        throw new Error("Could not read a word count from Gemini response.");
+      }
+
+      const wordCount = parseInt(numberMatch[0], 10);
+
+      if (Number.isNaN(wordCount)) {
+        console.error("Gemini raw response (NaN):", rawText);
+        throw new Error("Could not read a word count from Gemini response.");
+      }
+
+      return wordCount;
+    }
+
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s
@@ -396,6 +425,7 @@
   </script>
 </body>
 </html>
+
 
 
 
