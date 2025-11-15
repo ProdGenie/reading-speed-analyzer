@@ -1,5 +1,9 @@
 // netlify/functions/gemini.js
 
+// Simple Netlify function that calls Gemini's REST API using fetch
+// Expects body: { imageBase64: "..." }
+// Returns: { raw: "text from Gemini" }
+
 exports.handler = async function (event) {
   // Only allow POST
   if (event.httpMethod !== "POST") {
@@ -18,7 +22,7 @@ exports.handler = async function (event) {
       return {
         statusCode: 400,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Missing 'imageBase64' in request body" }),
+        body: JSON.stringify({ error: "Missing imageBase64 in request body" }),
       };
     }
 
@@ -31,22 +35,21 @@ exports.handler = async function (event) {
       };
     }
 
-    // ✅ Correct REST endpoint + valid model name
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
-      apiKey;
-
-    const prompt =
-      "Count the NUMBER OF WORDS in this page image. Return ONLY the number, no extra text.";
+    // IMPORTANT: use a model that exists for v1beta *without* "-latest"
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [
         {
           parts: [
-            { text: prompt },
             {
-              inline_data: {
-                mime_type: "image/jpeg",
+              text:
+                "You are a reading assistant. Count how many WORDS are " +
+                "visible in this page image. Return ONLY the number, with no other text.",
+            },
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
                 data: imageBase64,
               },
             },
@@ -64,6 +67,7 @@ exports.handler = async function (event) {
     const text = await response.text();
 
     if (!response.ok) {
+      // Surface Gemini's error back to the front-end
       return {
         statusCode: response.status,
         headers: { "Content-Type": "application/json" },
@@ -74,14 +78,31 @@ exports.handler = async function (event) {
       };
     }
 
-    const data = JSON.parse(text);
-    const parts = data.candidates?.[0]?.content?.parts || [];
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (e) {
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          error: "Unable to parse Gemini response as JSON",
+          details: text,
+        }),
+      };
+    }
 
+    // Grab the text Gemini returned (could be just a number or a short sentence)
     const raw =
-      parts
-        .map((p) => p.text || "")
-        .join(" ")
-        .trim() || "";
+      (json.candidates &&
+        json.candidates[0] &&
+        json.candidates[0].content &&
+        json.candidates[0].content.parts &&
+        json.candidates[0].content.parts
+          .map((p) => (p.text || "").trim())
+          .join(" ")
+          .trim()) ||
+      "";
 
     return {
       statusCode: 200,
@@ -93,7 +114,7 @@ exports.handler = async function (event) {
       statusCode: 500,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        error: "Internal error",
+        error: "Internal server error",
         details: err.message || String(err),
       }),
     };
