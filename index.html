@@ -3,218 +3,602 @@
 <head>
   <meta charset="UTF-8" />
   <title>Reading Speed Analyzer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { background:#020617; color:#e5e7eb; }
+    :root {
+      --bg: #050816;
+      --bg-alt: #0f172a;
+      --accent: #6366f1;
+      --accent-soft: rgba(99, 102, 241, 0.15);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.12);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-soft: 0 22px 40px rgba(15, 23, 42, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 52%, #000 100%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 24px 12px 40px;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 880px;
+      background: linear-gradient(135deg, #020617 0%, #020617 40%, #020617 100%);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 24px 24px 28px;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 900px) {
+      .app-shell {
+        padding: 28px 32px 32px;
+      }
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: clamp(26px, 2.4vw, 30px);
+      letter-spacing: 0.03em;
+    }
+
+    .title-sub {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .icon-btn {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: radial-gradient(circle at top, #1d2536 0, #020617 60%);
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.14s ease-out;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .section {
+      margin-top: 18px;
+      padding: 16px 16px 18px;
+      border-radius: var(--radius-lg);
+      background: radial-gradient(circle at top left, #020617 0, #020617 55%, #020617 100%);
+      border: 1px solid var(--border);
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -6px;
+      margin-bottom: 12px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 640px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      border-radius: 9px;
+      border: 1px solid rgba(55, 65, 81, 0.95);
+      background: radial-gradient(circle at top, #020617 0, #020617 60%, #020617 100%);
+      color: var(--text);
+      font-size: 14px;
+      padding: 9px 10px;
+      outline: none;
+      transition: border 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s;
+    }
+
+    input::placeholder {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.55);
+    }
+
+    input[type="file"] {
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    @media (min-width: 640px) {
+      .btn-row {
+        flex-direction: row;
+      }
+    }
+
+    .btn-main,
+    .btn-reset {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 11px 14px;
+      transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, opacity 0.12s;
+    }
+
+    .btn-main {
+      background: radial-gradient(circle at top left, #4f46e5 0, #6366f1 40%, #4f46e5 100%);
+      color: white;
+      box-shadow: 0 16px 35px rgba(79, 70, 229, 0.55);
+    }
+
+    .btn-main:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 40px rgba(79, 70, 229, 0.65);
+    }
+
+    .btn-main:disabled,
+    .btn-reset:disabled {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-reset {
+      background: #b91c1c;
+      background: linear-gradient(135deg, #b91c1c 0, #dc2626 35%, #b91c1c 100%);
+      color: #fee2e2;
+      box-shadow: 0 14px 32px rgba(220, 38, 38, 0.55);
+    }
+
+    .btn-reset:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 17px 38px rgba(220, 38, 38, 0.7);
+    }
+
+    .status-line {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 16px;
+    }
+
+    .message {
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: 9px;
+      font-size: 13px;
+      border: 1px solid transparent;
+    }
+
+    .message.hidden {
+      display: none;
+    }
+
+    .message.error {
+      background: var(--danger-soft);
+      border-color: rgba(239, 68, 68, 0.8);
+      color: #fecaca;
+    }
+
+    .message.info {
+      background: var(--accent-soft);
+      border-color: rgba(129, 140, 248, 0.9);
+      color: #e0e7ff;
+    }
+
+    .results {
+      margin-top: 18px;
+      padding: 14px 16px 14px;
+      border-radius: var(--radius-lg);
+      background: radial-gradient(circle at top, #020617 0, #020617 55%, #020617 100%);
+      border: 1px solid rgba(55, 65, 81, 0.95);
+    }
+
+    .results.hidden {
+      display: none;
+    }
+
+    .results-title {
+      font-size: 15px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .result-card {
+      padding: 10px 11px;
+      border-radius: 11px;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.96));
+      border: 1px solid rgba(31, 41, 55, 0.95);
+    }
+
+    .result-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .result-value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .result-value.level {
+      text-transform: capitalize;
+    }
+
+    .method-text {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Help modal */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.78);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: 16px;
+    }
+
+    .modal-backdrop.hidden {
+      display: none;
+    }
+
+    .modal-panel {
+      max-width: 520px;
+      width: 100%;
+      border-radius: 18px;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 24px 55px rgba(15, 23, 42, 0.9);
+      padding: 16px 18px 16px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .modal-close {
+      border: none;
+      border-radius: 999px;
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .modal-close:hover {
+      background: #111827;
+      color: #e5e7eb;
+    }
+
+    .modal-body {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .levels-list {
+      margin: 8px 0 0;
+      padding-left: 16px;
+      font-size: 12px;
+    }
+
+    .levels-list li {
+      margin-bottom: 3px;
+    }
+
+    .levels-list strong {
+      color: #e5e7eb;
+    }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-3xl bg-slate-900/80 rounded-2xl shadow-2xl border border-slate-700 p-6 md:p-8">
-    <header class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl md:text-3xl font-extrabold text-white">
-        Reading Speed Analyzer
-      </h1>
-      <!-- Help icon -->
-      <button id="help-btn"
-              class="w-8 h-8 flex items-center justify-center rounded-full border border-slate-500 text-slate-200 text-sm hover:bg-slate-700"
-              title="How this works">
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div class="title-block">
+        <h1>Reading Speed Analyzer</h1>
+        <p class="title-sub">
+          Upload a sample page or enter page count to estimate your reading speed and level.
+        </p>
+      </div>
+      <button type="button" id="help-btn" class="icon-btn" aria-label="How this works">
         i
       </button>
     </header>
 
-
-    <!-- Form -->
-    <form id="wpm-form" class="space-y-6">
-      <!-- 1. Time -->
-      <section>
-        <h2 class="text-lg md:text-xl font-semibold text-indigo-300 mb-3">
-          1. Reading Time
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form id="analyzer-form" autocomplete="off" novalidate>
+      <!-- Reading Time -->
+      <section class="section">
+        <h2>1. Reading Time</h2>
+        <p class="sub">Enter how long you were reading.</p>
+        <div class="grid-2">
           <div>
-            <label for="time-minutes" class="block text-sm mb-1">Minutes (M)</label>
-            <input id="time-minutes" type="number" min="0" required
-                   class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 focus:outline-none focus:ring focus:ring-indigo-500" />
+            <label for="minutes">Minutes (M)</label>
+            <input type="number" id="minutes" min="0" step="1" placeholder="e.g. 10" required />
           </div>
           <div>
-            <label for="time-seconds" class="block text-sm mb-1">Seconds (S)</label>
-            <input id="time-seconds" type="number" min="0" max="59" required
-                   class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 focus:outline-none focus:ring focus:ring-indigo-500" />
+            <label for="seconds">Seconds (S)</label>
+            <input type="number" id="seconds" min="0" max="59" step="1" placeholder="e.g. 30" />
           </div>
         </div>
       </section>
 
-      <!-- 2. Pages -->
-      <section>
-        <h2 class="text-lg md:text-xl font-semibold text-indigo-300 mb-3">
-          2. Page Measurement
-        </h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm mb-1">
-              Upload Page Images (1 = sample, multiple = each page)
-            </label>
-            <input id="page-images" type="file" accept="image/*" multiple
-                   class="w-full text-sm text-slate-200 file:mr-4 file:py-2 file:px-4
-                          file:rounded-full file:border-0 file:text-sm
-                          file:font-semibold file:bg-indigo-600 file:text-white
-                          hover:file:bg-indigo-500" />
-          </div>
+      <!-- Page Measurement -->
+      <section class="section">
+        <h2>2. Page Measurement</h2>
+        <p class="sub">
+          Choose one of these setups:
+          <br />• Upload <strong>1 sample page</strong> and enter total pages read,
+          <br />• Upload <strong>each page</strong> you read, or
+          <br />• Enter page count manually (no images).
+        </p>
 
-          <div>
-            <label for="total-pages" class="block text-sm mb-1">
-              Total pages read (only if you uploaded exactly 1 sample page)
-            </label>
-            <input id="total-pages" type="number" min="1"
-                   placeholder="e.g. 5"
-                   class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 focus:outline-none focus:ring focus:ring-indigo-500" />
-            <p class="mt-1 text-xs text-slate-400">
-              Example: upload 1 clear page, enter 5 here if you read 5 similar pages.
-            </p>
-          </div>
+        <div style="margin-bottom: 10px;">
+          <label for="page-images">Upload Page Images (1 = sample, multiple = each page)</label>
+          <input
+            type="file"
+            id="page-images"
+            accept="image/*"
+            multiple
+          />
+          <p class="hint">
+            Clear, well-lit photos of the page work best.
+          </p>
+        </div>
 
-          <div>
-            <label for="manual-pages" class="block text-sm mb-1">
-              Manual Page Count (if no images)
-            </label>
-            <input id="manual-pages" type="number" min="1"
-                   placeholder="e.g. 10"
-                   class="w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 focus:outline-none focus:ring focus:ring-indigo-500" />
-            <p class="mt-1 text-xs text-slate-400">
-              If you don't upload images, we estimate using 300 words per page.
-            </p>
-          </div>
+        <div style="margin-bottom: 10px;">
+          <label for="total-pages">Total pages read (only if you uploaded exactly 1 sample page)</label>
+          <input
+            type="number"
+            id="total-pages"
+            min="1"
+            step="1"
+            placeholder="e.g. 5"
+          />
+          <p class="hint">
+            Example: upload 1 clear sample page, enter 5 here if you read 5 similar pages.
+          </p>
+        </div>
+
+        <div>
+          <label for="manual-pages">Manual Page Count (if no images)</label>
+          <input
+            type="number"
+            id="manual-pages"
+            min="1"
+            step="1"
+            placeholder="e.g. 10"
+          />
+          <p class="hint">
+            If you don't upload images, we estimate using <strong>300 words per page</strong>.
+          </p>
         </div>
       </section>
 
-      <!-- Button & status -->
-      <div class="pt-2">
-        <button id="submit-btn"
-                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 font-semibold text-white transition disabled:opacity-60 disabled:cursor-not-allowed">
-          <span id="submit-text">Calculate Reading Speed</span>
-          <span id="spinner" class="hidden animate-spin border-2 border-white/60 border-t-transparent rounded-full w-4 h-4"></span>
+      <div class="btn-row">
+        <button type="submit" class="btn-main" id="submit-btn">
+          Calculate Reading Speed
         </button>
-      </div>
-
-      <p id="status-line" class="text-xs text-slate-400 mt-1"></p>
-    </form>
-
-    <!-- Message -->
-    <div id="message-box" class="mt-4 p-3 rounded-lg text-sm text-center hidden"></div>
-
-    <!-- Results -->
-    <section id="results-container"
-             class="mt-6 pt-5 border-t border-slate-700 hidden">
-      <h2 class="text-xl font-bold text-emerald-400 mb-4 text-center">
-        Results
-      </h2>
-      <div class="space-y-2 text-sm md:text-base">
-        <p class="flex justify-between">
-          <span class="font-semibold">Total Words Read:</span>
-          <span id="total-words" class="font-mono text-emerald-300">0</span>
-        </p>
-        <p class="flex justify-between text-lg md:text-2xl">
-          <span class="font-semibold">Words Per Minute (WPM):</span>
-          <span id="wpm-result" class="font-extrabold text-emerald-400">0</span>
-        </p>
-        <p class="flex justify-between">
-          <span class="font-semibold">Reading Level:</span>
-          <span id="reading-level" class="font-semibold text-indigo-300">
-            –
-          </span>
-        </p>
-        <p id="method-used" class="mt-3 text-xs text-slate-400 italic"></p>
-      </div>
-    </section>
-
-
-      <!-- Reset button -->
-      <div class="mt-4">
-        <button id="reset-btn"
-                type="button"
-                class="w-full rounded-lg bg-red-600 hover:bg-red-500 px-4 py-2.5 text-sm font-semibold text-white">
+        <button type="button" class="btn-reset" id="reset-btn">
           New Calculation (Full Reset)
         </button>
       </div>
 
-    
-    <!-- Help modal -->
-    <div id="help-modal"
-         class="fixed inset-0 bg-black/60 flex items-center justify-center z-40 hidden">
-      <div class="bg-slate-900 border border-slate-700 rounded-xl p-5 max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold mb-3">How this tool works</h3>
-        <ul class="text-sm space-y-2 text-slate-200">
-          <li>• Enter how long you read (minutes + seconds).</li>
-          <li>• Option A: upload 1 sample page & enter the total number of similar pages read.</li>
-          <li>• Option B: upload multiple pages (each page you read).</li>
-          <li>• Option C: no images → enter manual page count (uses 300 words/page).</li>
-          <li>• WPM categories:
-            <br />Beginner: &lt; 200 &nbsp;|&nbsp;
-            Intermediate: 200–300 &nbsp;|&nbsp;
-            Advanced: 300–450 &nbsp;|&nbsp;
-            Expert: 450–600 &nbsp;|&nbsp;
-            Master: &gt; 600
-          </li>
-        </ul>
-        <button id="help-close"
-                class="mt-4 w-full rounded-lg bg-slate-700 hover:bg-slate-600 py-2 text-sm font-semibold">
-          Close
+      <div id="status-line" class="status-line"></div>
+      <div id="message" class="message hidden"></div>
+
+      <section id="results" class="results hidden" aria-live="polite">
+        <div class="results-title">Results</div>
+        <div class="result-grid">
+          <div class="result-card">
+            <div class="result-label">Total Words Read</div>
+            <div id="total-words" class="result-value">0</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Words Per Minute (WPM)</div>
+            <div id="wpm" class="result-value">0</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Reading Level</div>
+            <div id="level" class="result-value level">–</div>
+          </div>
+        </div>
+        <p id="method-used" class="method-text"></p>
+      </section>
+    </form>
+  </main>
+
+  <!-- Help modal -->
+  <div id="help-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2 class="modal-title">How this tool works</h2>
+        <button type="button" id="help-close" class="modal-close" aria-label="Close help">
+          ×
         </button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-top: 0; margin-bottom: 6px;">
+          1. Time yourself while reading.<br />
+          2. Upload a sample page (or each page) <em>or</em> just enter how many pages you read.<br />
+          3. The app estimates how many words you read and calculates your words per minute.
+        </p>
+        <p style="margin-bottom: 4px;">
+          Levels (assuming normal difficulty text):
+        </p>
+        <ul class="levels-list">
+          <li><strong>Beginner</strong>: under 150 wpm</li>
+          <li><strong>Intermediate</strong>: 150–250 wpm</li>
+          <li><strong>Advanced</strong>: 250–350 wpm</li>
+          <li><strong>Expert</strong>: 350–450 wpm</li>
+          <li><strong>Master</strong>: 450+ wpm</li>
+        </ul>
       </div>
     </div>
   </div>
 
   <script>
-    const FUNCTION_URL = "/.netlify/functions/gemini";
-    const DEFAULT_WPP = 300;
-
-    const form = document.getElementById("wpm-form");
+    // ====== DOM elements ======
+    const form = document.getElementById("analyzer-form");
+    const minutesInput = document.getElementById("minutes");
+    const secondsInput = document.getElementById("seconds");
     const fileInput = document.getElementById("page-images");
-    const manualPagesInput = document.getElementById("manual-pages");
     const totalPagesInput = document.getElementById("total-pages");
-    const messageBox = document.getElementById("message-box");
-    const resultsContainer = document.getElementById("results-container");
-    const totalWordsSpan = document.getElementById("total-words");
-    const wpmSpan = document.getElementById("wpm-result");
-    const levelSpan = document.getElementById("reading-level");
-    const methodUsedP = document.getElementById("method-used");
-    const statusLine = document.getElementById("status-line");
+    const manualPagesInput = document.getElementById("manual-pages");
+
     const submitBtn = document.getElementById("submit-btn");
-    const submitText = document.getElementById("submit-text");
-    const spinner = document.getElementById("spinner");
+    const resetBtn = document.getElementById("reset-btn");
+
+    const statusLine = document.getElementById("status-line");
+    const messageBox = document.getElementById("message");
+
+    const resultsContainer = document.getElementById("results");
+    const totalWordsSpan = document.getElementById("total-words");
+    const wpmSpan = document.getElementById("wpm");
+    const levelSpan = document.getElementById("level");
+    const methodUsedP = document.getElementById("method-used");
 
     const helpBtn = document.getElementById("help-btn");
     const helpModal = document.getElementById("help-modal");
     const helpClose = document.getElementById("help-close");
-    const resetBtn = document.getElementById("reset-btn");
 
+    const DEFAULT_WORDS_PER_PAGE = 300;
 
+    // ====== Helpers ======
     function showMessage(text, isError = false) {
-      messageBox.classList.remove("hidden");
+      if (!text) {
+        messageBox.classList.add("hidden");
+        messageBox.textContent = "";
+        return;
+      }
       messageBox.textContent = text;
-      messageBox.className =
-        "mt-4 p-3 rounded-lg text-sm text-center " +
-        (isError
-          ? "bg-red-900/70 border border-red-500 text-red-100"
-          : "bg-blue-900/60 border border-blue-500 text-blue-100");
+      messageBox.classList.remove("hidden");
+      messageBox.classList.toggle("error", isError);
+      messageBox.classList.toggle("info", !isError);
     }
 
     function clearMessage() {
-      messageBox.classList.add("hidden");
-      messageBox.textContent = "";
+      showMessage("");
     }
 
-    function setLoading(isLoading, label) {
+    function setLoading(isLoading) {
+      submitBtn.disabled = isLoading;
+      resetBtn.disabled = isLoading;
       if (isLoading) {
-        submitBtn.disabled = true;
-        submitText.textContent = label || "Calculating...";
-        spinner.classList.remove("hidden");
+        submitBtn.textContent = "Analyzing...";
       } else {
-        submitBtn.disabled = false;
-        submitText.textContent = "Calculate Reading Speed";
-        spinner.classList.add("hidden");
+        submitBtn.textContent = "Calculate Reading Speed";
       }
+    }
+
+    function classifyLevel(wpm) {
+      if (wpm < 150) return "beginner";
+      if (wpm < 250) return "intermediate";
+      if (wpm < 350) return "advanced";
+      if (wpm < 450) return "expert";
+      return "master";
     }
 
     function fileToBase64(file) {
@@ -222,146 +606,97 @@
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result;
-          const base64 = result.split(",")[1];
+          const base64 = result.split(",")[1]; // remove "data:*/*;base64,"
           resolve(base64);
         };
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error("Could not read image file."));
         reader.readAsDataURL(file);
       });
     }
 
-    
-        async function countWordsForImage(file, index, total) {
-      // Show progress
-      statusLine.textContent = `Analyzing page ${index + 1} of ${total}...`;
+    async function countWordsForImage(file, index, total) {
+      statusLine.textContent = `Analyzing page ${index + 1} of ${total} with Gemini...`;
 
-      // 1) File -> base64
-      const base64 = await fileToBase64(file);
+      const imageBase64 = await fileToBase64(file);
 
-      // 2) Call our Netlify Gemini function
-      const res = await fetch("/.netlify/functions/gemini", {
+      const response = await fetch("/.netlify/functions/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64 }),
+        body: JSON.stringify({ imageBase64 }),
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Gemini error (${res.status}): ${errText}`);
-      }
-
-      const data = await res.json();
-
-      // 3) Get the raw text returned by the server
-      let rawText = "";
-
-      if (data.raw) {
-        rawText = data.raw; // { raw: "312" } or "This page has 312 words"
-      } else if (
-        data.candidates &&
-        data.candidates[0] &&
-        data.candidates[0].content &&
-        data.candidates[0].content.parts &&
-        data.candidates[0].content.parts[0].text
-      ) {
-        // fallback if we ever pass the full Gemini response through
-        rawText = data.candidates[0].content.parts[0].text;
-      }
-
-      rawText = String(rawText).trim();
-
-      // 4) Extract the first number in the text (e.g. 312 from "312" or "312 words")
-      const numberMatch = rawText.match(/\d+/);
-
-      if (!numberMatch) {
-        console.error("Gemini raw response (no digits):", rawText);
-        throw new Error("Could not read a word count from Gemini response.");
-      }
-
-      const wordCount = parseInt(numberMatch[0], 10);
-
-      if (Number.isNaN(wordCount)) {
-        console.error("Gemini raw response (NaN):", rawText);
-        throw new Error("Could not read a word count from Gemini response.");
-      }
-
-      return wordCount;
-    }
-
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s
-
-      let response;
-      try {
-        response = await fetch(FUNCTION_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ payload }),
-          signal: controller.signal
-        });
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
       if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new Error(`Gemini error (${response.status}): ${text}`);
+        const errText = await response.text();
+        throw new Error(
+          `Gemini error (${response.status}): ${errText || "Unable to analyze image."}`
+        );
       }
 
       const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const match = text.match(/\d+/);
-      if (!match) {
+      const raw = data.raw || data.text || "";
+
+      // Expect a number like "312" somewhere in the text.
+      const numberMatch = String(raw).match(/\d+/);
+      if (!numberMatch) {
+        console.error("Gemini raw response (no number found):", raw);
         throw new Error("Could not read a word count from Gemini response.");
       }
-      return parseInt(match[0], 10);
+
+      const count = parseInt(numberMatch[0], 10);
+      if (!Number.isFinite(count) || count <= 0) {
+        throw new Error("Gemini returned an invalid word count.");
+      }
+
+      return count;
     }
 
-    function classifyLevel(wpm) {
-      if (wpm < 200) return "Beginner";
-      if (wpm < 300) return "Intermediate";
-      if (wpm < 450) return "Advanced";
-      if (wpm < 600) return "Expert";
-      return "Master";
-    }
-
+    // ====== Main submit handler ======
     async function handleSubmit(event) {
       event.preventDefault();
       clearMessage();
       resultsContainer.classList.add("hidden");
       statusLine.textContent = "";
 
-      const minutes = parseInt(document.getElementById("time-minutes").value) || 0;
-      const seconds = parseInt(document.getElementById("time-seconds").value) || 0;
-      const files = fileInput.files;
-      const manualPages = parseInt(manualPagesInput.value) || 0;
-      const totalPages = parseInt(totalPagesInput.value) || 0;
+      const minutes = Number(minutesInput.value || "0");
+      const seconds = Number(secondsInput.value || "0");
 
-      if (minutes === 0 && seconds === 0) {
-        showMessage("Please enter the total reading time.", true);
-        return;
-      }
-
-      if (files.length === 0 && manualPages <= 0) {
-        showMessage("Upload at least one page image or enter a manual page count.", true);
+      if (minutes < 0 || seconds < 0) {
+        showMessage("Time values cannot be negative.", true);
         return;
       }
 
       const totalMinutes = minutes + seconds / 60;
+      if (!totalMinutes || totalMinutes <= 0) {
+        showMessage("Please enter a reading time greater than 0.", true);
+        return;
+      }
+
+      const files = fileInput.files || [];
+      const totalPages = Number(totalPagesInput.value || "0");
+      const manualPages = Number(manualPagesInput.value || "0");
+
+      if (files.length === 0 && manualPages <= 0) {
+        showMessage(
+          "Please either upload at least one page image or enter a manual page count.",
+          true
+        );
+        return;
+      }
+
       let totalWords = 0;
       let methodDescription = "";
 
       try {
-        setLoading(true, "Analyzing pages...");
+        setLoading(true);
+        statusLine.textContent = "Starting analysis...";
 
         if (files.length === 1 && totalPages > 0) {
-          // Scenario A: one sample page × total pages
-          const sampleCount = await countWordsForImage(files[0], 0, 1);
-          totalWords = sampleCount * totalPages;
-          methodDescription = `Calculated from 1 sample page (~${sampleCount} words) × ${totalPages} total pages.`;
-        } else if (files.length >= 1 && totalPages === 0) {
-          // Scenario B: multiple actual pages (or one page, but no totalPages)
+          // Scenario A: 1 sample page + total pages
+          const sampleWords = await countWordsForImage(files[0], 0, 1);
+          totalWords = sampleWords * totalPages;
+          methodDescription = `Used 1 sample page (~${sampleWords.toLocaleString()} words) × ${totalPages} page(s).`;
+        } else if (files.length > 0) {
+          // Scenario B: multiple actual pages (or 1 page without totalPages)
           const wordCounts = [];
           for (let i = 0; i < files.length; i++) {
             const count = await countWordsForImage(files[i], i, files.length);
@@ -369,13 +704,16 @@
           }
           totalWords = wordCounts.reduce((a, b) => a + b, 0);
           const avg = Math.round(totalWords / wordCounts.length);
-          methodDescription = `Calculated directly from ${files.length} page image(s). Average words per page: ${avg}.`;
+          methodDescription = `Calculated directly from ${files.length} page image(s). Average words per page: ${avg.toLocaleString()}.`;
         } else if (files.length === 0 && manualPages > 0) {
           // Scenario C: manual pages only
-          totalWords = manualPages * DEFAULT_WPP;
-          methodDescription = `Used manual page count (${manualPages}) × ${DEFAULT_WPP} words per page (standard book average).`;
+          totalWords = manualPages * DEFAULT_WORDS_PER_PAGE;
+          methodDescription = `Used manual page count (${manualPages}) × ${DEFAULT_WORDS_PER_PAGE} words per page (standard book average).`;
         } else {
-          showMessage("Combination of options is unclear. Either:\n• 1 image + total pages, OR\n• multiple images, OR\n• no images + manual pages.", true);
+          showMessage(
+            "Combination of options is unclear. Either: (a) 1 image + total pages, (b) multiple images, or (c) no images + manual pages.",
+            true
+          );
           setLoading(false);
           return;
         }
@@ -387,31 +725,22 @@
         wpmSpan.textContent = Math.round(wpm).toLocaleString();
         levelSpan.textContent = level;
         methodUsedP.textContent = methodDescription;
+
         resultsContainer.classList.remove("hidden");
         statusLine.textContent = "Done.";
-      } catch (err) {
-        console.error(err);
-        showMessage(err.message || "Something went wrong while contacting Gemini.", true);
+      } catch (error) {
+        console.error(error);
+        showMessage(error.message || "Something went wrong while contacting Gemini.", true);
         statusLine.textContent = "";
       } finally {
         setLoading(false);
       }
     }
 
-    // Help modal
-    helpBtn.addEventListener("click", () => {
-      helpModal.classList.remove("hidden");
-    });
-    helpClose.addEventListener("click", () => {
-      helpModal.classList.add("hidden");
-    });
-    helpModal.addEventListener("click", (e) => {
-      if (e.target === helpModal) helpModal.classList.add("hidden");
-    });
-
-        function fullReset() {
-      form.reset();                    // clears inputs
-      clearMessage();                  // hides message box
+    // ====== Reset & help ======
+    function fullReset() {
+      form.reset();
+      clearMessage();
       resultsContainer.classList.add("hidden");
       statusLine.textContent = "";
       totalWordsSpan.textContent = "0";
@@ -420,12 +749,19 @@
     }
 
     resetBtn.addEventListener("click", fullReset);
-
     form.addEventListener("submit", handleSubmit);
+
+    helpBtn.addEventListener("click", () => {
+      helpModal.classList.remove("hidden");
+    });
+    helpClose.addEventListener("click", () => {
+      helpModal.classList.add("hidden");
+    });
+    helpModal.addEventListener("click", (event) => {
+      if (event.target === helpModal) {
+        helpModal.classList.add("hidden");
+      }
+    });
   </script>
 </body>
 </html>
-
-
-
-
